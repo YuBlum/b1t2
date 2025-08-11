@@ -14,6 +14,8 @@ enum entity_flag {
   HOLDING             = 1 << 4,
   NOT_HOLDING         = 1 << 5,
   RENDER_RECT         = 1 << 6,
+  FOLLOW              = 1 << 7,
+  RENDER_RADIUS       = 1 << 8,
 };
 
 struct entity_handle {
@@ -28,11 +30,13 @@ struct entity_handle {
 struct entity {
   enum entity_flag flags;
   enum entity_flag next_flags;
+  struct v2 target_position;
   struct v2 position;
   struct v2 velocity;
   struct v2 size;
   struct entity_handle target;
   float speed;
+  float interaction_radius;
   enum sprite sprite;
 };
 

@@ -24,6 +24,10 @@ entity_manager_update(float dt) {
     auto e = entities.cached[i];
     if (entity_get_flags(e, NOT_HOLDING)) hold_released(e, dt);
   }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, FOLLOW)) follow(e, dt);
+  }
 }
 
 void
@@ -35,5 +39,9 @@ entity_manager_render(void) {
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
     if (entity_get_flags(e, RENDER_RECT)) render_rect(e);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, RENDER_RADIUS)) render_radius(e);
   }
 }

@@ -1,13 +1,15 @@
-#include <sys/mman.h>
-#include <unistd.h>
+#include <stdlib.h>
 #include <errno.h>
 #include "engine/core.h"
 #include "engine/os.h"
 
+/* page size is always 64KB */
+#define PAGE_SIZE (1<<16)
+
 void *
 os_mem_reserve(size_t amount) {
-  void *mem = mmap(0, amount, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-  if (mem == MAP_FAILED) {
+  void *mem = malloc(amount);
+  if (!mem) {
     log_errorlf("%s: failed with error code: %d", __func__, errno);
     return 0;
   }
@@ -17,26 +19,23 @@ os_mem_reserve(size_t amount) {
 bool
 os_mem_commit(void *buf, size_t amount) {
   (void)buf; (void)amount;
-  /* already lazily commiting on linux */
+  /* lazily commition is not possible with WASM */
   return true;
 }
 
 bool
 os_mem_free(void *buf, size_t amount) {
-  if (munmap(buf, amount) != 0) {
-    log_errorlf("%s: failed with error code: %d", __func__, errno);
-    return false;
-  }
+  (void)amount;
+  free(buf);
   return true;
 }
 
 size_t
 os_page_size(void) {
-  size_t ps = (size_t)sysconf(_SC_PAGESIZE);
-  return ps > 0 ? ps : 4096;
+  return PAGE_SIZE;
 }
 
 size_t
 os_reasonable_default_capacity(void) {
-  return (1ull << 32); 
+  return PAGE_SIZE; 
 }

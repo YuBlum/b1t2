@@ -36,7 +36,7 @@ __arena_align__(size_t length, size_t alignment
 
 struct arena *
 arena_make(size_t capacity, size_t alignment) {
-  if (!capacity) capacity = (1ull << 32) - sizeof (struct arena); // defaults to 4G
+  if (!capacity) capacity = os_reasonable_default_capacity() - sizeof (struct arena); // defaults to 4G
   struct arena *arena = os_mem_reserve(capacity + sizeof (struct arena));
   if (!arena) {
     log_errorlf("%s: couldn't allocate memory for the arena", __func__);

@@ -2,7 +2,11 @@
 #  include <assert.h>
 #endif
 #include <stdlib.h>
-#include <glad/glad.h>
+#if WASM
+#  include <GLES3/gl3.h>
+#else
+#  include <glad/glad.h>
+#endif
 #include <GLFW/glfw3.h>
 #include "engine/core.h"
 #include "engine/string.h"
@@ -150,10 +154,15 @@ shader_program_make(const struct str_view *vert_src, const struct str_view *frag
 bool
 renderer_make(void) {
   log_infol("making renderer...");
+#ifndef WASM
   gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+#endif
   log_infol("loaded opengl functions");
   g_renderer.sh_default = shader_program_make(&SH_DEFAULT_VERT, &SH_DEFAULT_FRAG);
-  if (!g_renderer.sh_default) return false;
+  if (!g_renderer.sh_default) {
+    log_errorl("couldn't create default shader");
+    return false;
+  }
   g_renderer.sh_default_proj = glGetUniformLocation(g_renderer.sh_default, "u_proj");
 #if DEV
   if (g_renderer.sh_default_proj < 0) {
@@ -166,7 +175,10 @@ renderer_make(void) {
   log_infol("created default shader");
 #if DEV
   g_renderer.sh_circle = shader_program_make(&SH_CIRCLE_VERT, &SH_CIRCLE_FRAG);
-  if (!g_renderer.sh_circle) return false;
+  if (!g_renderer.sh_circle) {
+    log_errorl("couldn't create circle shader");
+    return false;
+  }
   g_renderer.sh_circle_proj = glGetUniformLocation(g_renderer.sh_circle, "u_proj");
   if (g_renderer.sh_circle_proj < 0) {
     log_errorl("couldn't get 'u_proj' location from circle shader");

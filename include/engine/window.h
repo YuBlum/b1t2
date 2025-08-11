@@ -18,7 +18,8 @@ enum key : uint8_t {
 bool window_make(uint32_t width, uint32_t height);
 void window_destroy(void);
 void window_close();
-bool window_is_running();
+float window_frame_begin(void);
+bool window_frame_end(void);
 bool window_is_key_press(enum key key);
 bool window_is_key_down(enum key key);
 bool window_is_key_up(enum key key);

@@ -39,8 +39,13 @@ window_make(uint32_t width, uint32_t height) {
   }
   log_infol("glfw initialized");
   glfwWindowHint(GLFW_RESIZABLE, false);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+#if WASM
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#else
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#endif
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   g_window.handle = glfwCreateWindow(width, height, GAME_TITLE, 0, 0);
   if (!g_window.handle) {
@@ -48,7 +53,6 @@ window_make(uint32_t width, uint32_t height) {
     return false;
   }
   glfwMakeContextCurrent(g_window.handle);
-  glfwSwapInterval(1);
   log_infolf("window created with %d %d dimensions", width, height);
   const GLFWvidmode *vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
   if (vidmode) {
@@ -74,11 +78,18 @@ window_close(void) {
   (void)glfwSetWindowShouldClose(g_window.handle, true);
 }
 
-bool
-window_is_running(void) {
-  memcpy(g_window.pkeys, g_window.keys, sizeof (bool) * KEY_AMOUNT);
+float 
+window_frame_begin(void) {
+  float prv_time = g_window.time;
+  g_window.time = glfwGetTime();
   glfwPollEvents();
   glfwSwapBuffers(g_window.handle);
+  return g_window.time - prv_time;
+}
+
+bool
+window_frame_end(void) {
+  memcpy(g_window.pkeys, g_window.keys, sizeof (bool) * KEY_AMOUNT);
   return !glfwWindowShouldClose(g_window.handle);
 }
 
@@ -126,9 +137,3 @@ window_is_key_release(enum key key) {
   return g_window.pkeys[key] && !g_window.keys[key];
 }
 
-float
-window_get_delta_time(void) {
-  float prv_time = g_window.time;
-  g_window.time = glfwGetTime();
-  return g_window.time - prv_time;
-}

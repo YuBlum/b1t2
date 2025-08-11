@@ -22,7 +22,7 @@ ON_UPDATE_SYSTEM(move, MOVABLE) {
 ON_UPDATE_SYSTEM(move_held, HOLDING) {
   (void)dt;
   auto target = entity_get_data(self->target);
-  if (target) target->position = V2(self->position.x, self->position.y + 0.5f);
+  if (target) target->target_position = V2(self->position.x, self->position.y + (self->size.y + target->size.y) * 0.5f);
 }
 
 ON_UPDATE_SYSTEM(release_held, HOLDING) {
@@ -36,9 +36,13 @@ ON_UPDATE_SYSTEM(hold_released, NOT_HOLDING) {
   (void)dt;
   if (!window_is_key_press(K_INTERACT)) return;
   auto target = entity_get_data(self->target);
-  if (!target || !check_rect_rect(self->position, self->size, target->position, target->size)) return;
+  if (!target || !check_rect_circle(target->position, target->size, self->position, self->interaction_radius)) return;
   entity_remove_flags(self, NOT_HOLDING);
   entity_add_flags(self, HOLDING);
+}
+
+ON_UPDATE_SYSTEM(follow, FOLLOW) {
+  self->position = v2_lerp(self->position, self->target_position, self->speed * dt);
 }
 
 ON_RENDER_SYSTEM(render_sprite, RENDER_SPRITE) {
@@ -62,6 +66,15 @@ ON_RENDER_SYSTEM(render_rect, RENDER_RECT) {
     GREEN,
     1.0f,
     0.0f
+  );
+}
+
+ON_RENDER_SYSTEM(render_radius, RENDER_RADIUS) {
+  renderer_request_circle(
+    self->position,
+    self->interaction_radius,
+    BLUE,
+    0.2f
   );
 }
 #endif

@@ -46,3 +46,8 @@ os_page_size(void) {
   GetSystemInfo(&si);
   return (size_t)si.dwPageSize;
 }
+
+size_t
+os_reasonable_default_capacity(void) {
+  return (1ull << 32); 
+}
