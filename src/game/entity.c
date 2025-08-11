@@ -1,4 +1,5 @@
 #include "game/entity.h"
+#include "game/systems.h"
 
 #define ENTITY_CAP 10
 
@@ -11,6 +12,8 @@ static struct entity_manager {
   uint32_t       cached_amount;
   uint32_t       free_list_amount;
 } entities;
+
+#include "game/entities_update_and_render_impl.h"
 
 void
 entity_set_flags(struct entity *entity, enum entity_flag flags) {
@@ -28,7 +31,7 @@ entity_get_flags(struct entity *entity, enum entity_flag flags) {
 }
 
 struct entity *
-entity_make(void) {
+entity_make(enum entity_flag flags) {
   #if DEV
   if (!entities.free_list_amount) {
     log_errorlf("%s: trying to make too many entities", __func__);
@@ -40,8 +43,8 @@ entity_make(void) {
   auto entity = &entities.data[index];
   entities.cached_index[index] = entities.cached_amount;
   entities.cached[entities.cached_amount++] = entity;
-  entity->flags = 0;
-  entity_set_flags(entity, FLAG_ALIVE);
+  entity->flags = flags;
+  entity_set_flags(entity, ALIVE);
   return entity;
 }
 
@@ -54,8 +57,8 @@ entity_destroy(struct entity *entity) {
     return;
   }
   #endif
-  if (!entity_get_flags(entity, FLAG_ALIVE)) return;
-  entity_clear_flags(entity, FLAG_ALIVE);
+  if (!entity_get_flags(entity, ALIVE)) return;
+  entity_clear_flags(entity, ALIVE);
   entities.free_list[entities.free_list_amount++] = index;
   entities.cached[entities.cached_index[index]] = entities.cached[--entities.cached_amount];
 }
@@ -64,7 +67,7 @@ struct entity *
 entity_get_data(struct entity_handle handle) {
   if (handle.index > ENTITY_CAP || handle.generation != entities.generations[handle.index]) return 0;
   auto e = &entities.data[handle.index];
-  return entity_get_flags(e, FLAG_ALIVE) ? e : 0;
+  return entity_get_flags(e, ALIVE) ? e : 0;
 }
 
 struct entity_handle
@@ -90,3 +93,4 @@ entity_manager_init(void) {
     entities.free_list[entities.free_list_amount++] = i;
   }
 }
+

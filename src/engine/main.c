@@ -14,11 +14,6 @@
 int
 main(void) {
   srand(time(0));
-  struct arena *tmp_arena = arena_make(0, 0);
-  if (!tmp_arena) {
-    log_errorl("couldn't make main temporary arena");
-    return 1;
-  }
   if (!window_make(WINDOW_W, WINDOW_H)) return 1;
   if (!mixer_make()) {
     window_destroy();
@@ -36,14 +31,16 @@ main(void) {
   }
   entity_manager_init();
   global_init();
+  auto e = entity_make(RENDER_SPRITE);
+  e->position = V2(-0.5f, 0.5f);
+  e->sprite = SPR_TEST;
   float dt = window_get_delta_time(); /* call just to setup timer */
   while (window_is_running()) {
     dt = window_get_delta_time();
-    (void)dt;
     if (window_is_key_down(K_EXIT)) window_close();
-    renderer_request_sprite(SPR_PLAYER, V2S(0.0f), V2S(0.0f), 0.0f, V2S(1.0f), WHITE, 1.0f, 0.0f);
+    entity_manager_update(dt);
+    entity_manager_render();
     renderer_submit();
-    arena_clear(tmp_arena);
   }
   mixer_destroy();
   window_destroy();

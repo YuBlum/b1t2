@@ -45,6 +45,7 @@ else
   echo "invalid target platform $1"
 fi
 
+./generate_systems.py
 rm -f $OUT
 $CC $FLAGS $DEF $SRCS $LIBS $INCS -o $OUT
 ./$OUT
