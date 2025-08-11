@@ -11,6 +11,22 @@
 #define WINDOW_W (GAME_W_PIXEL * GAME_S)
 #define WINDOW_H (GAME_H_PIXEL * GAME_S)
 
+void
+test_entities(void) {
+  auto player = entity_make(RENDER_SPRITE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING);
+  auto flower = entity_make(RENDER_RECT);
+
+  player->position = V2S(0.0f);
+  player->velocity = V2S(0.0f);
+  player->speed    = 10.0f;
+  player->sprite   = SPR_TEST;
+  player->target   = entity_get_handle(flower);
+  player->size     = V2(1.0f, 1.0f);
+
+  flower->position = player->position;
+  flower->size     = V2(0.5f, 0.5f);
+}
+
 int
 main(void) {
   srand(time(0));
@@ -31,9 +47,7 @@ main(void) {
   }
   entity_manager_init();
   global_init();
-  auto e = entity_make(RENDER_SPRITE);
-  e->position = V2(-0.5f, 0.5f);
-  e->sprite = SPR_TEST;
+  test_entities();
   float dt = window_get_delta_time(); /* call just to setup timer */
   while (window_is_running()) {
     dt = window_get_delta_time();

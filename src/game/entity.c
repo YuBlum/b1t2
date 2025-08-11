@@ -1,28 +1,28 @@
 #include "game/entity.h"
 #include "game/systems.h"
 
-#define ENTITY_CAP 10
+#define ENTITY_CAP 1024
 
 static struct entity_manager {
-  struct entity *cached[ENTITY_CAP]; 
-  struct entity  data[ENTITY_CAP];
-  uint32_t       generations[ENTITY_CAP];
-  uint32_t       cached_index[ENTITY_CAP]; 
-  uint32_t       free_list[ENTITY_CAP];
-  uint32_t       cached_amount;
-  uint32_t       free_list_amount;
+  struct entity   *cached[ENTITY_CAP]; 
+  struct entity    data[ENTITY_CAP];
+  uint32_t         generations[ENTITY_CAP];
+  uint32_t         cached_index[ENTITY_CAP]; 
+  uint32_t         free_list[ENTITY_CAP];
+  uint32_t         cached_amount;
+  uint32_t         free_list_amount;
 } entities;
 
 #include "game/entities_update_and_render_impl.h"
 
 void
-entity_set_flags(struct entity *entity, enum entity_flag flags) {
-  entity->flags |= flags;
+entity_add_flags(struct entity *entity, enum entity_flag flags) {
+  entity->next_flags |= flags;
 }
 
 void
-entity_clear_flags(struct entity *entity, enum entity_flag flags) {
-  entity->flags &= ~flags;
+entity_remove_flags(struct entity *entity, enum entity_flag flags) {
+  entity->next_flags &= ~flags;
 }
 
 bool
@@ -43,8 +43,9 @@ entity_make(enum entity_flag flags) {
   auto entity = &entities.data[index];
   entities.cached_index[index] = entities.cached_amount;
   entities.cached[entities.cached_amount++] = entity;
-  entity->flags = flags;
-  entity_set_flags(entity, ALIVE);
+  entity->next_flags = flags|ALIVE;
+  entity->flags      = entity->next_flags;
+  entity_add_flags(entity, ALIVE);
   return entity;
 }
 
@@ -58,14 +59,14 @@ entity_destroy(struct entity *entity) {
   }
   #endif
   if (!entity_get_flags(entity, ALIVE)) return;
-  entity_clear_flags(entity, ALIVE);
+  entity->flags = NO_FLAGS;
   entities.free_list[entities.free_list_amount++] = index;
   entities.cached[entities.cached_index[index]] = entities.cached[--entities.cached_amount];
 }
 
 struct entity *
 entity_get_data(struct entity_handle handle) {
-  if (handle.index > ENTITY_CAP || handle.generation != entities.generations[handle.index]) return 0;
+  if (handle.index >= ENTITY_CAP || handle.generation != entities.generations[handle.index]) return 0;
   auto e = &entities.data[handle.index];
   return entity_get_flags(e, ALIVE) ? e : 0;
 }
@@ -78,7 +79,7 @@ entity_get_handle(struct entity *entity) {
   if (handle.index >= ENTITY_CAP) {
     log_errorlf("%s: invalid entity", __func__);
     handle.index = 0;
-    handle.generation = (uint32_t)-1;
+    handle.generation = 0;
     return handle;
   }
   #endif

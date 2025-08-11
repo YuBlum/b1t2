@@ -3,6 +3,12 @@
 
 #include "game/entity.h"
 
+void keyboard_control(struct entity *self, float dt);
+void move(struct entity *self, float dt);
+void move_held(struct entity *self, float dt);
+void release_held(struct entity *self, float dt);
+void hold_released(struct entity *self, float dt);
 void render_sprite(struct entity *self);
+void render_rect(struct entity *self);
 
 #endif/*__SYSTEMS_H__*/

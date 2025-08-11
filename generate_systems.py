@@ -97,6 +97,10 @@ src = "void\nentity_manager_update(float dt) {\n"
 if len(on_update_systems) == 0:
     src += "  (void)dt;\n"
 else:
+    src += "  for (uint32_t i = 0; i < entities.cached_amount; i++) {\n"
+    src += "    auto e = entities.cached[i];\n"
+    src += "    e->flags = e->next_flags;\n"
+    src += "  }\n"
     for system in on_update_systems:
         src += "  for (uint32_t i = 0; i < entities.cached_amount; i++) {\n"
         src += "    auto e = entities.cached[i];\n"

@@ -1,6 +1,29 @@
 void
 entity_manager_update(float dt) {
-  (void)dt;
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    e->flags = e->next_flags;
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, MOVABLE|KEYBOARD_CONTROLLED)) keyboard_control(e, dt);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, MOVABLE)) move(e, dt);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, HOLDING)) move_held(e, dt);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, HOLDING)) release_held(e, dt);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, NOT_HOLDING)) hold_released(e, dt);
+  }
 }
 
 void
@@ -8,5 +31,9 @@ entity_manager_render(void) {
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
     if (entity_get_flags(e, RENDER_SPRITE)) render_sprite(e);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, RENDER_RECT)) render_rect(e);
   }
 }
