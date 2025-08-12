@@ -9,14 +9,17 @@ enum sprite {
   SPRITES_AMOUNT
 };
 
-struct animation {
-  float change_frame_timer; 
-  enum animation_index : uint16_t {
-    ANIM_PLAYER_IDLE = 0,
-    ANIM_PLAYER_WALK,
-    ANIMATIONS_AMOUNT,
-  } index;
-  uint16_t current_frame;
+enum animation {
+  ANIM_PLAYER_IDLE = 0,
+  ANIM_PLAYER_WALK,
+  ANIMATIONS_AMOUNT
+};
+
+struct animation_data {
+  const float *durations;
+  float frame_width;
+  uint32_t frames_amount;
+  enum sprite sprite;
 };
 
 #endif/*__SPRITES_H__*/

@@ -9,6 +9,8 @@ void move_held(struct entity *self, float dt);
 void release_held(struct entity *self, float dt);
 void hold_released(struct entity *self, float dt);
 void follow(struct entity *self, float dt);
+void update_animation(struct entity *self, float dt);
+void render_animation(struct entity *self);
 void render_sprite(struct entity *self);
 void render_rect(struct entity *self);
 void render_radius(struct entity *self);

@@ -16,6 +16,7 @@ enum entity_flag {
   RENDER_RECT         = 1 << 6,
   FOLLOW              = 1 << 7,
   RENDER_RADIUS       = 1 << 8,
+  RENDER_ANIMATION    = 1 << 9,
 };
 
 struct entity_handle {
@@ -38,6 +39,9 @@ struct entity {
   float speed;
   float interaction_radius;
   enum sprite sprite;
+  enum animation animation;
+  float change_frame_timer;
+  uint32_t current_frame;
 };
 
 void entity_add_flags(struct entity *entity, enum entity_flag flags);

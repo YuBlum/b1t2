@@ -55,7 +55,8 @@ for meta, name in metas:
     for tag in meta["meta"]["frameTags"]:
         animations.append({
             "name": name+"_"+tag["name"].upper(),
-            "durations": [f["duration"] for f in meta["frames"][tag["from"]:tag["to"]]],
+            "sprite": "SPR_"+name,
+            "durations": [f["duration"]/1000 for f in meta["frames"][tag["from"]:(tag["to"]+1)]],
             "frame-width": meta["frames"][0]["frame"]["w"],
             "direction": tag["direction"]
         })
@@ -78,17 +79,18 @@ for i, info in enumerate(sprite_infos):
         sprites_h += " = 0"
     sprites_h += ",\n"
 sprites_h += "  SPRITES_AMOUNT\n};\n\n"
-sprites_h += "struct animation {\n"
-sprites_h += "  float change_frame_timer; \n"
-sprites_h += "  enum animation_index : uint16_t {\n"
+sprites_h += "enum animation {\n"
 for i, anim in enumerate(animations):
-    sprites_h += "    ANIM_%s" % anim["name"]
+    sprites_h += "  ANIM_%s" % anim["name"]
     if i == 0:
         sprites_h += " = 0"
     sprites_h += ",\n"
-sprites_h += "    ANIMATIONS_AMOUNT,\n"
-sprites_h += "  } index;\n"
-sprites_h += "  uint16_t current_frame;\n"
+sprites_h += "  ANIMATIONS_AMOUNT\n};\n\n"
+sprites_h += "struct animation_data {\n"
+sprites_h += "  const float *durations;\n"
+sprites_h += "  float frame_width;\n"
+sprites_h += "  uint32_t frames_amount;\n"
+sprites_h += "  enum sprite sprite;\n"
 sprites_h += "};\n\n"
 sprites_h += "#endif/*__SPRITES_H__*/\n"
 
@@ -125,18 +127,15 @@ for info in sprite_infos:
 atlas_h += "};\n\n"
 for anim in animations:
     atlas_h += "static const float g_atlas_animation_durations_" + anim["name"].lower() + ("[%u]" % len(anim["durations"])) + " = {\n"
-    atlas_h += "".join("  %d.0f,\n" % d for d in anim["durations"])
+    atlas_h += "".join("  %g,\n" % d for d in anim["durations"])
     atlas_h += "};\n\n"
-atlas_h += "static const struct animation_data {\n"
-atlas_h += "  const float *durations;\n"
-atlas_h += "  float frame_width;\n"
-atlas_h += "  uint32_t frames_amount;\n"
-atlas_h += "} g_atlas_animation_frames[ANIMATIONS_AMOUNT] = {\n"
+atlas_h += "static const struct animation_data g_atlas_animations[ANIMATIONS_AMOUNT] = {\n"
 for anim in animations:
     atlas_h += "  {\n"
     atlas_h += "    .durations = g_atlas_animation_durations_" + anim["name"].lower() + ",\n"
     atlas_h += "    .frame_width = %d.0f * ATLAS_PIXEL_W,\n" % anim["frame-width"]
-    atlas_h += "    .frames_amount = %d\n" % len(anim["durations"])
+    atlas_h += "    .frames_amount = %d,\n" % len(anim["durations"])
+    atlas_h += "    .sprite = %s\n" % anim["sprite"]
     atlas_h += "  },\n"
 atlas_h += "};\n\n"
 atlas_h += "#endif/*__ATLAS_H__*/\n"

@@ -13,16 +13,16 @@
 
 void
 test_entities(void) {
-  auto player = entity_make(RENDER_SPRITE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|RENDER_RADIUS);
+  auto player = entity_make(RENDER_ANIMATION|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|RENDER_RADIUS);
   auto flower = entity_make(RENDER_RECT|FOLLOW);
 
   player->position           = V2S(0.0f);
   player->velocity           = V2S(0.0f);
   player->speed              = 10.0f;
-  player->sprite             = SPR_TEST;
   player->target             = entity_get_handle(flower);
   player->size               = V2(1.0f, 1.0f);
   player->interaction_radius = 1.5f;
+  player->animation          = ANIM_PLAYER_IDLE;
 
   flower->position = player->position;
   flower->size     = V2(0.5f, 0.5f);

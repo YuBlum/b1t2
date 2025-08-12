@@ -43,6 +43,7 @@ entity_make(enum entity_flag flags) {
   auto entity = &entities.data[index];
   entities.cached_index[index] = entities.cached_amount;
   entities.cached[entities.cached_amount++] = entity;
+  *entity = (struct entity) { 0 };
   entity->next_flags = flags|ALIVE;
   entity->flags      = entity->next_flags;
   entity_add_flags(entity, ALIVE);

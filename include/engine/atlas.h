@@ -34,31 +34,31 @@ static const struct v2 g_atlas_sprite_half_sizes[SPRITES_AMOUNT] = {
   { 48.0f * UNIT_ONE_PIXEL, 8.0f * UNIT_ONE_PIXEL },
 };
 
-static const float g_atlas_animation_durations_player_idle[3] = {
-  300.0f,
-  100.0f,
-  150.0f,
+static const float g_atlas_animation_durations_player_idle[4] = {
+  0.3,
+  0.1,
+  0.15,
+  0.1,
 };
 
-static const float g_atlas_animation_durations_player_walk[2] = {
-  150.0f,
-  150.0f,
+static const float g_atlas_animation_durations_player_walk[3] = {
+  0.15,
+  0.15,
+  0.15,
 };
 
-static const struct animation_data {
-  const float *durations;
-  float frame_width;
-  uint32_t frames_amount;
-} g_atlas_animation_frames[ANIMATIONS_AMOUNT] = {
+static const struct animation_data g_atlas_animations[ANIMATIONS_AMOUNT] = {
   {
     .durations = g_atlas_animation_durations_player_idle,
     .frame_width = 24.0f * ATLAS_PIXEL_W,
-    .frames_amount = 3
+    .frames_amount = 4,
+    .sprite = SPR_PLAYER
   },
   {
     .durations = g_atlas_animation_durations_player_walk,
     .frame_width = 24.0f * ATLAS_PIXEL_W,
-    .frames_amount = 2
+    .frames_amount = 3,
+    .sprite = SPR_PLAYER
   },
 };
 

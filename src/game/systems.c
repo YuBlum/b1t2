@@ -45,11 +45,40 @@ ON_UPDATE_SYSTEM(follow, FOLLOW) {
   self->position = v2_lerp(self->position, self->target_position, self->speed * dt);
 }
 
+ON_UPDATE_SYSTEM(update_animation, RENDER_ANIMATION) {
+  auto animation = renderer_animation_get_data(self->animation);
+  #if DEV
+  if (!animation) {
+    log_warnlf("%s: animation with index '%u' doesn't exists", __func__, self->animation);
+    return;
+  }
+  #endif
+  self->change_frame_timer += dt;
+  if (self->change_frame_timer > animation->durations[self->current_frame]) {
+    self->change_frame_timer = 0;
+    self->current_frame = (self->current_frame + 1) % animation->frames_amount;
+  }
+}
+
+ON_RENDER_SYSTEM(render_animation, RENDER_ANIMATION) {
+  renderer_request_animation(
+    self->animation,
+    self->current_frame,
+    self->position,
+    V2S(0.0f),
+    0.0f,
+    V2S(1.0f),
+    WHITE,
+    1.0f,
+    0.0f
+  );
+}
+
 ON_RENDER_SYSTEM(render_sprite, RENDER_SPRITE) {
   renderer_request_sprite(
     self->sprite,
     self->position,
-    V2S(0.0f), 
+    V2S(0.0f),
     0.0f,
     V2S(1.0f),
     WHITE,

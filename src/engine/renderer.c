@@ -268,7 +268,7 @@ renderer_submit(void) {
     g_renderer.vertices[i].v[2].position = v2_sub(g_renderer.vertices[i].v[2].position, g_renderer.offset);
     g_renderer.vertices[i].v[3].position = v2_sub(g_renderer.vertices[i].v[3].position, g_renderer.offset);
   }
-  glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
   glUseProgram(g_renderer.sh_default);
   glBufferSubData(GL_ARRAY_BUFFER, 0, g_renderer.quads_amount * sizeof (struct quad_vertices), g_renderer.vertices);
@@ -282,6 +282,12 @@ renderer_submit(void) {
   glDrawElements(GL_TRIANGLES, g_renderer.circles_amount * 6, GL_UNSIGNED_INT, 0);
   g_renderer.circles_amount = 0;
 #endif
+}
+
+const struct animation_data *
+renderer_animation_get_data(enum animation animation) {
+  if (animation >= ANIMATIONS_AMOUNT) return 0;
+  return &g_atlas_animations[animation];
 }
 
 void
@@ -332,7 +338,7 @@ renderer_request_sprite(enum sprite sprite, struct v2 position, struct v2 origin
 }
 
 void
-renderer_request_sprite_slice(enum sprite sprite, struct v2u top_left, struct v2u size, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth) {
+renderer_request_sprite_slice(enum sprite sprite, struct v2 top_left, struct v2 size, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth) {
 #if DEV
   if (g_renderer.quads_amount + 1 >= QUAD_CAPACITY) {
     log_warnlf("%s: trying to request to much quads for rendering. increase QUAD_CAPACITY", __func__);
@@ -344,9 +350,9 @@ renderer_request_sprite_slice(enum sprite sprite, struct v2u top_left, struct v2
   }
 #endif
   static_assert(sizeof (struct vertex) == sizeof (float) * 12);
-  struct v2 hsiz = V2(size.x * 0.5f * UNIT_ONE_PIXEL, size.y * 0.5f * UNIT_ONE_PIXEL),
-            tpos = v2_add(g_atlas_sprite_positions[sprite], V2(top_left.x * ATLAS_PIXEL_W, top_left.y * ATLAS_PIXEL_H)),
-            tsiz = V2(size.x * ATLAS_PIXEL_W, size.y * ATLAS_PIXEL_H),
+  struct v2 hsiz = V2(size.x * ATLAS_WIDTH * 0.5f * UNIT_ONE_PIXEL, size.y * ATLAS_HEIGHT * 0.5f * UNIT_ONE_PIXEL),
+            tpos = v2_add(g_atlas_sprite_positions[sprite], top_left),
+            tsiz = size,
             cos_sin = { cosf(angle), sinf(angle) };
   struct vertex *vertices = g_renderer.vertices[g_renderer.quads_amount].v;
   vertices[0].position = position;
@@ -376,6 +382,24 @@ renderer_request_sprite_slice(enum sprite sprite, struct v2u top_left, struct v2
   g_renderer.indices_to_sort[g_renderer.quads_amount].depth = depth;
   g_renderer.indices_to_sort[g_renderer.quads_amount].start = g_renderer.quads_amount * 4;
   g_renderer.quads_amount++;
+}
+
+void
+renderer_request_animation(enum animation animation, uint32_t frame, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth) {
+  #if DEV
+  if (animation >= ANIMATIONS_AMOUNT) {
+    log_warnlf("%s: animation with index '%u' doesn't exists", __func__, animation);
+    return;
+  }
+  if (frame >= g_atlas_animations[animation].frames_amount) {
+    log_warnlf("%s: maximum frame of animation is '%u', but requested frame '%u'", __func__, g_atlas_animations[animation].frames_amount, frame);
+    return;
+  }
+  #endif
+  auto sprite = g_atlas_animations[animation].sprite;
+  struct v2 size     = { g_atlas_animations[animation].frame_width, g_atlas_sprite_sizes[sprite].y },
+            top_left = { size.x * frame, 0.0f };
+  renderer_request_sprite_slice(sprite, top_left, size, position, origin, angle, scale, color, opacity, depth);
 }
 
 #if DEV
