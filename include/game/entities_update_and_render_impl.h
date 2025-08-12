@@ -6,11 +6,11 @@ entity_manager_update(float dt) {
   }
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
-    if (entity_get_flags(e, MOVABLE|KEYBOARD_CONTROLLED)) keyboard_control(e, dt);
+    if (entity_get_flags(e, NOT_MOVING|KEYBOARD_CONTROLLED)) keyboard_control(e, dt);
   }
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
-    if (entity_get_flags(e, MOVABLE)) move(e, dt);
+    if (entity_get_flags(e, MOVING)) move(e, dt);
   }
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
@@ -27,6 +27,10 @@ entity_manager_update(float dt) {
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
     if (entity_get_flags(e, FOLLOW)) follow(e, dt);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, MOVING|FACING)) change_facing(e, dt);
   }
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];

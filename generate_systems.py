@@ -1,10 +1,27 @@
 #!/usr/bin/env python3
 
 import os
+import json
+
+e = {}
+with open("./entity_flags.json", "r") as f:
+    e = json.load(f)
+
+with open("./include/game/entity_flags.h", "w") as f:
+    flags_h  = "#ifndef __ENTITY_FLAGS_H__\n"
+    flags_h += "#define __ENTITY_FLAGS_H__\n\n"
+    flags_h += "enum entity_flag {\n"
+    flags_h += "  NO_FLAGS = 0,\n"
+    for i, flag in enumerate(e["flags"]):
+        flags_h += "  " + flag + (" = 1 << %d,\n" % i)
+    flags_h += "};\n\n"
+    flags_h += "#endif/*__ENTITY_FLAGS_H__*/\n"
+    f.write(flags_h)
 
 src = ""
 with open("./src/game/systems.c", "r") as f:
     src = f.read()
+
 
 lexer_tokens = []
 lexer_at     = 0

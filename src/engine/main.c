@@ -13,17 +13,17 @@
 
 void
 test_entities(void) {
-  auto player = entity_make(STATE_MACHINE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|RENDER_RADIUS);
+  auto player = entity_make(STATE_MACHINE|NOT_MOVING|KEYBOARD_CONTROLLED|HOLDING|FACING);
   auto flower = entity_make(RENDER_RECT|FOLLOW);
 
   player->position                  = V2S(0.0f);
-  player->velocity                  = V2S(0.0f);
-  player->speed                     = 10.0f;
+  player->speed                     = 8.0f;
   player->target                    = entity_get_handle(flower);
   player->size                      = V2(1.0f, 1.0f);
   player->interaction_radius        = 1.5f;
   player->state_animation[STM_IDLE] = ANIM_PLAYER_IDLE;
   player->state_animation[STM_WALK] = ANIM_PLAYER_WALK;
+  player->scale                     = V2S(1.0f);
 
   flower->position = player->position;
   flower->size     = V2(0.5f, 0.5f);
