@@ -30,7 +30,11 @@ entity_manager_update(float dt) {
   }
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
-    if (entity_get_flags(e, RENDER_ANIMATION)) update_animation(e, dt);
+    if (entity_get_flags(e, STATE_MACHINE)) update_state(e, dt);
+  }
+  for (uint32_t i = 0; i < entities.cached_amount; i++) {
+    auto e = entities.cached[i];
+    if (entity_get_flags(e, STATE_MACHINE)) update_animation(e, dt);
   }
 }
 
@@ -38,7 +42,7 @@ void
 entity_manager_render(void) {
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];
-    if (entity_get_flags(e, RENDER_ANIMATION)) render_animation(e);
+    if (entity_get_flags(e, STATE_MACHINE)) render_state_animation(e);
   }
   for (uint32_t i = 0; i < entities.cached_amount; i++) {
     auto e = entities.cached[i];

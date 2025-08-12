@@ -398,7 +398,7 @@ renderer_request_animation(enum animation animation, uint32_t frame, struct v2 p
   #endif
   auto sprite = g_atlas_animations[animation].sprite;
   struct v2 size     = { g_atlas_animations[animation].frame_width, g_atlas_sprite_sizes[sprite].y },
-            top_left = { size.x * frame, 0.0f };
+            top_left = { size.x * (frame + g_atlas_animations[animation].first_frame), 0.0f };
   renderer_request_sprite_slice(sprite, top_left, size, position, origin, angle, scale, color, opacity, depth);
 }
 

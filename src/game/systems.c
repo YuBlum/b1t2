@@ -45,11 +45,25 @@ ON_UPDATE_SYSTEM(follow, FOLLOW) {
   self->position = v2_lerp(self->position, self->target_position, self->speed * dt);
 }
 
-ON_UPDATE_SYSTEM(update_animation, RENDER_ANIMATION) {
-  auto animation = renderer_animation_get_data(self->animation);
+ON_UPDATE_SYSTEM(update_state, STATE_MACHINE) {
+  (void)dt;
+  auto prv_state = self->state;
+  if (self->velocity.x != 0.0f || self->velocity.y != 0.0f) {
+    self->state = STM_WALK;
+  } else {
+    self->state = STM_IDLE;
+  }
+  if (self->state != prv_state) {
+    self->change_frame_timer = 0.0f;
+    self->current_frame = 0.0f;
+  }
+}
+
+ON_UPDATE_SYSTEM(update_animation, STATE_MACHINE) {
+  auto animation = renderer_animation_get_data(self->state_animation[self->state]);
   #if DEV
   if (!animation) {
-    log_warnlf("%s: animation with index '%u' doesn't exists", __func__, self->animation);
+    log_warnlf("%s: animation with index '%u' doesn't exists", __func__, self->state_animation[self->state]);
     return;
   }
   #endif
@@ -60,9 +74,9 @@ ON_UPDATE_SYSTEM(update_animation, RENDER_ANIMATION) {
   }
 }
 
-ON_RENDER_SYSTEM(render_animation, RENDER_ANIMATION) {
+ON_RENDER_SYSTEM(render_state_animation, STATE_MACHINE) {
   renderer_request_animation(
-    self->animation,
+    self->state_animation[self->state],
     self->current_frame,
     self->position,
     V2S(0.0f),

@@ -5,18 +5,24 @@
 #include "engine/math.h"
 #include "engine/sprites.h"
 
+enum entity_state {
+  STM_IDLE = 0,
+  STM_WALK,
+  STM_AMOUNT
+};
+
 enum entity_flag {
   NO_FLAGS            = 0,
-  ALIVE               = 1 << 0,
-  RENDER_SPRITE       = 1 << 1,
-  MOVABLE             = 1 << 2,
-  KEYBOARD_CONTROLLED = 1 << 3,
-  HOLDING             = 1 << 4,
-  NOT_HOLDING         = 1 << 5,
-  RENDER_RECT         = 1 << 6,
-  FOLLOW              = 1 << 7,
-  RENDER_RADIUS       = 1 << 8,
-  RENDER_ANIMATION    = 1 << 9,
+  ALIVE               = 1 <<  0,
+  RENDER_SPRITE       = 1 <<  1,
+  MOVABLE             = 1 <<  2,
+  KEYBOARD_CONTROLLED = 1 <<  3,
+  HOLDING             = 1 <<  4,
+  NOT_HOLDING         = 1 <<  5,
+  RENDER_RECT         = 1 <<  6,
+  FOLLOW              = 1 <<  7,
+  RENDER_RADIUS       = 1 <<  8,
+  STATE_MACHINE       = 1 <<  9,
 };
 
 struct entity_handle {
@@ -39,9 +45,10 @@ struct entity {
   float speed;
   float interaction_radius;
   enum sprite sprite;
-  enum animation animation;
+  enum animation state_animation[STM_AMOUNT];
   float change_frame_timer;
   uint32_t current_frame;
+  enum entity_state state;
 };
 
 void entity_add_flags(struct entity *entity, enum entity_flag flags);

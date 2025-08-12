@@ -19,6 +19,7 @@ struct animation_data {
   const float *durations;
   float frame_width;
   uint32_t frames_amount;
+  uint32_t first_frame;
   enum sprite sprite;
 };
 

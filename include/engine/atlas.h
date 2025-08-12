@@ -52,12 +52,14 @@ static const struct animation_data g_atlas_animations[ANIMATIONS_AMOUNT] = {
     .durations = g_atlas_animation_durations_player_idle,
     .frame_width = 24.0f * ATLAS_PIXEL_W,
     .frames_amount = 4,
+    .first_frame = 0,
     .sprite = SPR_PLAYER
   },
   {
     .durations = g_atlas_animation_durations_player_walk,
     .frame_width = 24.0f * ATLAS_PIXEL_W,
     .frames_amount = 3,
+    .first_frame = 4,
     .sprite = SPR_PLAYER
   },
 };

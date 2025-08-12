@@ -14,8 +14,11 @@ json_names = [(f,n) for f,n in [(f+".json",n) for f,n in zip(file_names,names)] 
 img_paths  = [os.path.join(imgs_dir, n) for n in png_names]
 meta_paths = [(os.path.join(imgs_dir, f),n) for f,n in json_names]
 
-imgs  = [Image.open(file).convert("RGBA") for file in img_paths]
-metas = [(json.load(open(file)),n) for file,n in meta_paths]
+imgs = [Image.open(file).convert("RGBA") for file in img_paths]
+metas = []
+for file,n in meta_paths:
+    with open(file) as f:
+        metas.append((json.load(f),n))
 
 def next_pow2(x):
     return 1 << (x - 1).bit_length()
@@ -58,7 +61,7 @@ for meta, name in metas:
             "sprite": "SPR_"+name,
             "durations": [f["duration"]/1000 for f in meta["frames"][tag["from"]:(tag["to"]+1)]],
             "frame-width": meta["frames"][0]["frame"]["w"],
-            "direction": tag["direction"]
+            "first-frame": tag["from"]
         })
 #print(animations)
 
@@ -90,6 +93,7 @@ sprites_h += "struct animation_data {\n"
 sprites_h += "  const float *durations;\n"
 sprites_h += "  float frame_width;\n"
 sprites_h += "  uint32_t frames_amount;\n"
+sprites_h += "  uint32_t first_frame;\n"
 sprites_h += "  enum sprite sprite;\n"
 sprites_h += "};\n\n"
 sprites_h += "#endif/*__SPRITES_H__*/\n"
@@ -135,6 +139,7 @@ for anim in animations:
     atlas_h += "    .durations = g_atlas_animation_durations_" + anim["name"].lower() + ",\n"
     atlas_h += "    .frame_width = %d.0f * ATLAS_PIXEL_W,\n" % anim["frame-width"]
     atlas_h += "    .frames_amount = %d,\n" % len(anim["durations"])
+    atlas_h += "    .first_frame = %d,\n" % anim["first-frame"]
     atlas_h += "    .sprite = %s\n" % anim["sprite"]
     atlas_h += "  },\n"
 atlas_h += "};\n\n"
