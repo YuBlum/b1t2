@@ -11,6 +11,7 @@ LIBS="\
 -L./vendor/glfw/ \
 "
 INCS="\
+--embed-dir=./assets \
 -I./vendor/glfw/ \
 -I./include/ \
 -I./vendor/glad/include \
@@ -60,7 +61,14 @@ else
   echo "invalid target platform $1"
 fi
 
-./generate_systems.py
-rm -f $OUT
-$CC $FLAGS $DEF $SRCS $LIBS $INCS -o $OUT
+if ! ./generate_systems.py; then
+  echo "updating the systems failed"
+  exit 1
+fi
+
+if ! $CC $FLAGS $DEF $SRCS $LIBS $INCS -o $OUT; then
+  echo "compilation failed"
+  exit 1
+fi
+
 $RUN

@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 
 import os
+import json
 
 from PIL import Image
 
-imgs_path = "./assets/imgs/"
-file_names = [f for f in os.listdir(imgs_path) if os.path.isfile(os.path.join(imgs_path, f)) and f.endswith("png") ]
-file_paths = [os.path.join(imgs_path, n) for n in file_names]
+imgs_dir  = "./assets/imgs/"
+png_names  = [f for f in os.listdir(imgs_dir) if os.path.isfile(os.path.join(imgs_dir, f)) and f.endswith("png") ]
+file_names = [n.removesuffix(".png") for n in png_names]
+names      = [n.upper() for n in file_names]
+json_names = [(f,n) for f,n in [(f+".json",n) for f,n in zip(file_names,names)] if os.path.isfile(os.path.join(imgs_dir, f)) ]
 
-imgs = [Image.open(file).convert("RGBA") for file in file_paths]
+img_paths  = [os.path.join(imgs_dir, n) for n in png_names]
+meta_paths = [(os.path.join(imgs_dir, f),n) for f,n in json_names]
 
-names = [n.removesuffix(".png").upper() for n in file_names]
+imgs  = [Image.open(file).convert("RGBA") for file in img_paths]
+metas = [(json.load(open(file)),n) for file,n in meta_paths]
 
 def next_pow2(x):
     return 1 << (x - 1).bit_length()
@@ -43,6 +48,19 @@ for name, img in zip(names, imgs):
     row_height = max(row_height, h)
     atlas_height = max(atlas_height, y + h)
 
+animations = []
+for meta, name in metas:
+    if not "frameTags" in meta["meta"]:
+        continue
+    for tag in meta["meta"]["frameTags"]:
+        animations.append({
+            "name": name+"_"+tag["name"].upper(),
+            "durations": [f["duration"] for f in meta["frames"][tag["from"]:tag["to"]]],
+            "frame-width": meta["frames"][0]["frame"]["w"],
+            "direction": tag["direction"]
+        })
+#print(animations)
+
 atlas_height = next_pow2(atlas_height)
 
 atlas_img = Image.new("RGBA", (atlas_width, atlas_height), (0, 0, 0, 0))
@@ -60,6 +78,18 @@ for i, info in enumerate(sprite_infos):
         sprites_h += " = 0"
     sprites_h += ",\n"
 sprites_h += "  SPRITES_AMOUNT\n};\n\n"
+sprites_h += "struct animation {\n"
+sprites_h += "  float change_frame_timer; \n"
+sprites_h += "  enum animation_index : uint16_t {\n"
+for i, anim in enumerate(animations):
+    sprites_h += "    ANIM_%s" % anim["name"]
+    if i == 0:
+        sprites_h += " = 0"
+    sprites_h += ",\n"
+sprites_h += "    ANIMATIONS_AMOUNT,\n"
+sprites_h += "  } index;\n"
+sprites_h += "  uint16_t current_frame;\n"
+sprites_h += "};\n\n"
 sprites_h += "#endif/*__SPRITES_H__*/\n"
 
 atlas_h  = "#ifndef __ATLAS_H__\n"
@@ -69,11 +99,12 @@ atlas_h += "#include \"engine/sprites.h\"\n\n"
 atlas_h += "#define ATLAS_WIDTH %d\n" % atlas_width
 atlas_h += "#define ATLAS_HEIGHT %d\n" % atlas_height
 atlas_h += "#define ATLAS_PIXEL_W (1.0f/%d)\n" % atlas_width
-atlas_h += "#define ATLAS_PIXEL_H (1.0f/%d)\n" % atlas_height
-atlas_h += "static const uint32_t g_atlas_data[ATLAS_WIDTH*ATLAS_HEIGHT] = {\n"
-for i in range(0, len(atlas_data), 4):
-    atlas_h += "0x%02x%02x%02x%02x," % (atlas_data[i + 3], atlas_data[i + 2], atlas_data[i + 1], atlas_data[i + 0])
-atlas_h += "\n};\n\n"
+atlas_h += "#define ATLAS_PIXEL_H (1.0f/%d)\n\n" % atlas_height
+atlas_h += "static const uint8_t g_atlas_data[ATLAS_WIDTH*ATLAS_HEIGHT*4] = {\n"
+#for i in range(0, len(atlas_data), 4):
+#    atlas_h += "0x%02x%02x%02x%02x," % (atlas_data[i + 3], atlas_data[i + 2], atlas_data[i + 1], atlas_data[i + 0])
+atlas_h += "#embed \"imgs/atlas.bin\"\n"
+atlas_h += "};\n\n"
 atlas_h += "static const struct v2 g_atlas_sprite_positions[SPRITES_AMOUNT] = {\n"
 for info in sprite_infos:
     atlas_h += "  { %d.0f * ATLAS_PIXEL_W, %d.0f * ATLAS_PIXEL_H },\n" % (info["x"], info["y"])
@@ -92,10 +123,28 @@ for info in sprite_infos:
         h += ".0"
     atlas_h += "  { %sf * UNIT_ONE_PIXEL, %sf * UNIT_ONE_PIXEL },\n" % (w, h)
 atlas_h += "};\n\n"
+for anim in animations:
+    atlas_h += "static const float g_atlas_animation_durations_" + anim["name"].lower() + ("[%u]" % len(anim["durations"])) + " = {\n"
+    atlas_h += "".join("  %d.0f,\n" % d for d in anim["durations"])
+    atlas_h += "};\n\n"
+atlas_h += "static const struct animation_data {\n"
+atlas_h += "  const float *durations;\n"
+atlas_h += "  float frame_width;\n"
+atlas_h += "  uint32_t frames_amount;\n"
+atlas_h += "} g_atlas_animation_frames[ANIMATIONS_AMOUNT] = {\n"
+for anim in animations:
+    atlas_h += "  {\n"
+    atlas_h += "    .durations = g_atlas_animation_durations_" + anim["name"].lower() + ",\n"
+    atlas_h += "    .frame_width = %d.0f * ATLAS_PIXEL_W,\n" % anim["frame-width"]
+    atlas_h += "    .frames_amount = %d\n" % len(anim["durations"])
+    atlas_h += "  },\n"
+atlas_h += "};\n\n"
 atlas_h += "#endif/*__ATLAS_H__*/\n"
 
-atlas_img.save("./atlas_debug.png");
+#print(atlas_h)
+#print(sprites_h)
 
+atlas_img.save("./atlas_debug.png");
 
 path = "./include/engine/atlas.h"
 try:
@@ -109,6 +158,14 @@ path = "./include/engine/sprites.h"
 try:
     with open(path, "w") as f:
         f.write(sprites_h)
+        pass
+except:
+    print("couldn't open '", path, "'", sep="")
+
+path = imgs_dir + "atlas.bin"
+try:
+    with open(path, "wb") as f:
+        f.write(atlas_data)
         pass
 except:
     print("couldn't open '", path, "'", sep="")

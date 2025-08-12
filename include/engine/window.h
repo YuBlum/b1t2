@@ -18,6 +18,7 @@ enum key : uint8_t {
 bool window_make(uint32_t width, uint32_t height);
 void window_destroy(void);
 void window_close();
+void window_run(void);
 float window_frame_begin(void);
 bool window_frame_end(void);
 bool window_is_key_press(enum key key);
@@ -25,5 +26,7 @@ bool window_is_key_down(enum key key);
 bool window_is_key_up(enum key key);
 bool window_is_key_release(enum key key);
 float window_get_delta_time(void);
+
+bool game_loop(void);
 
 #endif/*__WINDOW_H__*/

@@ -7,9 +7,6 @@
 #include "game/global.h"
 #include "game/sound.h"
 #include "game/entity.h"
-#if WASM
-#include <emscripten.h>
-#endif
 
 #define WINDOW_W (GAME_W_PIXEL * GAME_S)
 #define WINDOW_H (GAME_H_PIXEL * GAME_S)
@@ -41,19 +38,9 @@ game_loop(void) {
   entity_manager_update(dt);
   entity_manager_render();
   renderer_submit();
-  if (window_is_key_press(K_INTERACT)) log_infol("Z");
-  if (window_is_key_press(K_LEFT)) log_infol("<-");
+  //log_infolf("FPS: %g", 1.0f/dt);
   return window_frame_end();
 }
-
-#if WASM
-void
-main_loop(void) {
-  if (!game_loop()) {
-    emscripten_cancel_main_loop();
-  }
-}
-#endif
 
 int
 main(void) {
@@ -76,12 +63,7 @@ main(void) {
   entity_manager_init();
   global_init();
   test_entities();
-#if WASM
-  emscripten_set_main_loop(main_loop, 0, true);
-#endif
-#ifndef WASM
-  while (game_loop());
-#endif
+  window_run();
   mixer_destroy();
   window_destroy();
   return 0;

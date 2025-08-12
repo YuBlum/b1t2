@@ -2,6 +2,9 @@
 #include <GLFW/glfw3.h>
 #include "engine/core.h"
 #include "engine/window.h"
+#if WASM
+#  include <emscripten.h>
+#endif
 
 struct window {
   GLFWwindow *handle;
@@ -53,6 +56,7 @@ window_make(uint32_t width, uint32_t height) {
     return false;
   }
   glfwMakeContextCurrent(g_window.handle);
+  //glfwSwapInterval(0);
   log_infolf("window created with %d %d dimensions", width, height);
   const GLFWvidmode *vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
   if (vidmode) {
@@ -76,6 +80,23 @@ window_destroy(void) {
 void
 window_close(void) {
   (void)glfwSetWindowShouldClose(g_window.handle, true);
+}
+
+#if WASM
+static void
+window_main_loop(void) {
+  if (!game_loop()) emscripten_cancel_main_loop();
+}
+#endif
+
+void
+window_run(void) {
+#if WASM
+  emscripten_set_main_loop(window_main_loop, 0, true);
+#endif
+#ifndef WASM
+  while (game_loop());
+#endif
 }
 
 float 
