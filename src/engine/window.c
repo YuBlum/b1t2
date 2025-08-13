@@ -14,6 +14,7 @@ struct window {
   bool keys[KEY_AMOUNT];
   bool pkeys[KEY_AMOUNT];
   bool btns[BUTTON_AMOUNT];
+  bool pbtns[BUTTON_AMOUNT];
 };
 
 static struct window g_window;
@@ -132,6 +133,7 @@ window_frame_begin(void) {
 bool
 window_frame_end(void) {
   memcpy(g_window.pkeys, g_window.keys, sizeof (bool) * KEY_AMOUNT);
+  memcpy(g_window.pbtns, g_window.btns, sizeof (bool) * BUTTON_AMOUNT);
   return !glfwWindowShouldClose(g_window.handle);
 }
 
@@ -180,6 +182,17 @@ window_is_key_release(enum key key) {
 }
 
 bool
+window_is_button_press(enum button btn) {
+#if DEV
+  if (btn >= BUTTON_AMOUNT) {
+    log_errorlf("%s: passing invalid button", __func__);
+    return false;
+  }
+#endif
+  return !g_window.pbtns[btn] && g_window.btns[btn];
+}
+
+bool
 window_is_button_down(enum button btn) {
 #if DEV
   if (btn >= BUTTON_AMOUNT) {
@@ -199,6 +212,17 @@ window_is_button_up(enum button btn) {
   }
 #endif
   return !g_window.btns[btn];
+}
+
+bool
+window_is_button_release(enum button btn) {
+#if DEV
+  if (btn >= BUTTON_AMOUNT) {
+    log_errorlf("%s: passing invalid button", __func__);
+    return false;
+  }
+#endif
+  return g_window.pbtns[btn] && !g_window.btns[btn];
 }
 
 struct v2

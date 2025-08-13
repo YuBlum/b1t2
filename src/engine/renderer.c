@@ -448,4 +448,18 @@ renderer_request_rect(struct v2 position, struct v2 size, struct color color, fl
     depth
   );
 }
+
+void
+renderer_request_point(struct v2 position, struct color color, float opacity, float depth) {
+  renderer_request_sprite(
+    SPR_PIXEL,
+    position,
+    V2S(0.0f),
+    0.0f,
+    V2S(1),
+    color,
+    opacity,
+    depth
+  );
+}
 #endif

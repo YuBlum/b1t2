@@ -32,6 +32,8 @@ bool window_is_key_up(enum key key);
 bool window_is_key_release(enum key key);
 bool window_is_button_down(enum button btn);
 bool window_is_button_up(enum button btn);
+bool window_is_button_press(enum button btn);
+bool window_is_button_release(enum button btn);
 struct v2 window_get_cursor_position(void);
 
 bool game_loop(void);

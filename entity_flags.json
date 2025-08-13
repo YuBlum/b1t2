@@ -12,12 +12,12 @@
     "RENDER_RECT",
     "FOLLOW",
     "STATE_MACHINE",
-    "FACING",
     "FOLLOW_CURSOR",
     "LOOPABLE",
     "DEPTH_BY_Y",
     "HAS_GUN",
-    "HOLDING_GUN"
+    "HOLDING_GUN",
+    "NOT_HOLDING_GUN"
   ]
 }
 

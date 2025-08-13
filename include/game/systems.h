@@ -12,6 +12,7 @@ void release_held(struct entity *self, float dt);
 void hold_released(struct entity *self, float dt);
 void follow(struct entity *self, float dt);
 void change_facing(struct entity *self, float dt);
+void change_facing_gun(struct entity *self, float dt);
 void update_movable_state(struct entity *self, float dt);
 void update_cursor_state(struct entity *self, float dt);
 void loop_animation(struct entity *self, float dt);

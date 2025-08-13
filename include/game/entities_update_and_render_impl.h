@@ -38,7 +38,11 @@ entity_manager_update(float dt) {
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];
-    if (entity_get_flags(e, MOVABLE|FACING)) change_facing(e, dt);
+    if (entity_get_flags(e, NOT_HOLDING_GUN)) change_facing(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, HOLDING_GUN)) change_facing_gun(e, dt);
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];

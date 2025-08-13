@@ -29,7 +29,7 @@ static const struct v2 g_atlas_sprite_sizes[SPRITES_AMOUNT] = {
   { 42.0f * ATLAS_PIXEL_W, 7.0f * ATLAS_PIXEL_H },
   { 16.0f * ATLAS_PIXEL_W, 16.0f * ATLAS_PIXEL_H },
   { 25.0f * ATLAS_PIXEL_W, 24.0f * ATLAS_PIXEL_H },
-  { 15.0f * ATLAS_PIXEL_W, 12.0f * ATLAS_PIXEL_H },
+  { 15.0f * ATLAS_PIXEL_W, 15.0f * ATLAS_PIXEL_H },
   { 96.0f * ATLAS_PIXEL_W, 16.0f * ATLAS_PIXEL_H },
 };
 
@@ -39,7 +39,7 @@ static const struct v2 g_atlas_sprite_half_sizes[SPRITES_AMOUNT] = {
   { 21.0f * UNIT_ONE_PIXEL, 3.5f * UNIT_ONE_PIXEL },
   { 8.0f * UNIT_ONE_PIXEL, 8.0f * UNIT_ONE_PIXEL },
   { 12.5f * UNIT_ONE_PIXEL, 12.0f * UNIT_ONE_PIXEL },
-  { 7.5f * UNIT_ONE_PIXEL, 6.0f * UNIT_ONE_PIXEL },
+  { 7.5f * UNIT_ONE_PIXEL, 7.5f * UNIT_ONE_PIXEL },
   { 48.0f * UNIT_ONE_PIXEL, 8.0f * UNIT_ONE_PIXEL },
 };
 

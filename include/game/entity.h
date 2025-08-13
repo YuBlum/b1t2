@@ -28,7 +28,7 @@ struct entity {
   enum entity_flag next_flags;
   struct v2 target_position;
   struct v2 position;
-  struct v2 velocity;
+  struct v2 direction;
   struct v2 size;
   struct v2 scale;
   struct v2 origin;

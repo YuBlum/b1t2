@@ -35,8 +35,9 @@ struct entity *
 entity_make(enum entity_flag flags) {
   #if DEV
   if (!g_entities.free_list_amount) {
-    log_errorlf("%s: trying to make too many g_entities", __func__);
-    return 0;
+    log_warnlf("%s: trying to make too many g_entities", __func__);
+    g_entities.stub = (struct entity) { 0 };
+    return &g_entities.stub;
   }
   #endif
   auto index = g_entities.free_list[--g_entities.free_list_amount];

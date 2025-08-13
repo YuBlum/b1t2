@@ -15,12 +15,12 @@ enum entity_flag {
   RENDER_RECT = 1 << 9,
   FOLLOW = 1 << 10,
   STATE_MACHINE = 1 << 11,
-  FACING = 1 << 12,
-  FOLLOW_CURSOR = 1 << 13,
-  LOOPABLE = 1 << 14,
-  DEPTH_BY_Y = 1 << 15,
-  HAS_GUN = 1 << 16,
-  HOLDING_GUN = 1 << 17,
+  FOLLOW_CURSOR = 1 << 12,
+  LOOPABLE = 1 << 13,
+  DEPTH_BY_Y = 1 << 14,
+  HAS_GUN = 1 << 15,
+  HOLDING_GUN = 1 << 16,
+  NOT_HOLDING_GUN = 1 << 17,
 };
 
 #endif/*__ENTITY_FLAGS_H__*/

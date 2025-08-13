@@ -13,15 +13,16 @@ ON_UPDATE_SYSTEM(follow_cursor, FOLLOW_CURSOR) {
 }
 
 ON_UPDATE_SYSTEM(keyboard_control, KEYBOARD_CONTROLLED) {
-  self->velocity = v2_muls(v2_unit(V2(
+  (void)dt;
+  self->direction = v2_unit(V2(
     window_is_key_down(KEY_RIGHT) - window_is_key_down(KEY_LEFT),
     window_is_key_down(KEY_UP)    - window_is_key_down(KEY_DOWN)
-  )), self->speed * dt);
+  ));
 }
 
 ON_UPDATE_SYSTEM(move, MOVABLE) {
   (void)dt;
-  self->position = v2_add(self->position, self->velocity);
+  self->position = v2_add(self->position, v2_muls(self->direction, self->speed * dt));
 }
 
 ON_UPDATE_SYSTEM(depth_by_y, DEPTH_BY_Y) {
@@ -60,16 +61,23 @@ ON_UPDATE_SYSTEM(follow, FOLLOW) {
   self->position = v2_lerp(self->position, self->target_position, self->speed * dt);
 }
 
-ON_UPDATE_SYSTEM(change_facing, MOVABLE, FACING) {
+ON_UPDATE_SYSTEM(change_facing, NOT_HOLDING_GUN) {
   (void)dt;
-  if      (self->velocity.x > 0.0f) self->scale.x = +1.0f;
-  else if (self->velocity.x < 0.0f) self->scale.x = -1.0f;
+  if      (self->direction.x > 0.0f) self->scale.x = +1.0f;
+  else if (self->direction.x < 0.0f) self->scale.x = -1.0f;
+}
+
+ON_UPDATE_SYSTEM(change_facing_gun, HOLDING_GUN) {
+  (void)dt;
+  auto cursor = window_get_cursor_position();
+  if      (self->position.x < cursor.x) self->scale.x = +1.0f;
+  else if (self->position.x > cursor.x) self->scale.x = -1.0f;
 }
 
 ON_UPDATE_SYSTEM(update_movable_state, MOVABLE, STATE_MACHINE) {
   (void)dt;
   auto prv_state = self->state;
-  if (self->velocity.x != 0.0f || self->velocity.y != 0.0f) {
+  if (self->direction.x != 0.0f || self->direction.y != 0.0f) {
     self->state = STM_WALK;
   } else {
     self->state = STM_IDLE;
@@ -114,6 +122,7 @@ ON_UPDATE_SYSTEM(update_animation, RENDER_ANIMATION) {
 ON_UPDATE_SYSTEM(activate_gun, HAS_GUN, NOT_HOLDING) {
   (void)dt;
   auto gun = entity_get_data(self->gun);
+  entity_remove_flags(self, NOT_HOLDING_GUN);
   entity_add_flags(self, HOLDING_GUN);
   entity_add_flags(gun, RENDER_SPRITE);
 }
@@ -121,17 +130,28 @@ ON_UPDATE_SYSTEM(activate_gun, HAS_GUN, NOT_HOLDING) {
 ON_UPDATE_SYSTEM(deactivate_gun, HAS_GUN, HOLDING) {
   (void)dt;
   auto gun = entity_get_data(self->gun);
+  entity_add_flags(self, NOT_HOLDING_GUN);
   entity_remove_flags(self, HOLDING_GUN);
   entity_remove_flags(gun, RENDER_SPRITE);
 }
 
 ON_UPDATE_SYSTEM(update_gun, HOLDING_GUN) {
   (void)dt;
-  auto gun = entity_get_data(self->gun);
-  gun->depth    = self->depth - 0.1f;
-  gun->angle    = v2_to_angle(v2_sub(window_get_cursor_position(), self->position));
-  gun->scale.y  = gun->angle > -(PI*0.5f) && gun->angle < (PI*0.5f) ? 1.0f : -1.0f;
-  gun->position = v2_add(self->position, v2_from_angle(gun->angle));
+  auto gun       = entity_get_data(self->gun);
+  gun->depth     = self->depth - 0.1f;
+  gun->angle     = v2_to_angle(v2_sub(window_get_cursor_position(), self->position));
+  gun->scale.y   = gun->angle > -(PI*0.5f) && gun->angle < (PI*0.5f) ? 1.0f : -1.0f;
+  gun->direction = v2_from_angle(gun->angle);
+  gun->position  = v2_add(self->position, gun->direction);
+  if (window_is_button_press(BTN_LEFT)) {
+    auto bullet       = entity_make(MOVABLE|RENDER_RECT);
+    bullet->position  = v2_add(gun->position, v2_muls(v2_from_angle(gun->angle), 0.3f));
+    bullet->direction = gun->direction;
+    bullet->speed     = 40.0f;
+    bullet->size      = V2S(2*UNIT_ONE_PIXEL);
+  } else if (window_is_button_down(BTN_LEFT)) {
+    gun->position = v2_sub(gun->position, v2_muls(gun->direction, 0.2f));
+  }
 }
 
 ON_RENDER_SYSTEM(render_animation, RENDER_ANIMATION) {
@@ -165,7 +185,7 @@ ON_RENDER_SYSTEM(render_rect, RENDER_RECT) {
   renderer_request_rect(
     self->position,
     self->size,
-    GREEN,
+    WHITE,
     1.0f,
     self->depth
   );
