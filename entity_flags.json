@@ -2,16 +2,17 @@
   "flags" : [
     "ALIVE",
     "RENDER_SPRITE",
-    "MOVING",
-    "NOT_MOVING",
+    "RENDER_ANIMATION",
+    "RENDER_RADIUS",
+    "MOVABLE",
     "KEYBOARD_CONTROLLED",
     "HOLDING",
     "NOT_HOLDING",
     "RENDER_RECT",
     "FOLLOW",
-    "RENDER_RADIUS",
     "STATE_MACHINE",
-    "FACING"
+    "FACING",
+    "FOLLOW_CURSOR"
   ]
 }
 

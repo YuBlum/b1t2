@@ -26,21 +26,27 @@ struct entity {
   enum entity_flag flags;
   enum entity_flag next_flags;
   struct v2 target_position;
-  struct v2 position_prv;
-  struct v2 position_nxt;
   struct v2 position;
+  struct v2 velocity;
   struct v2 size;
   struct v2 scale;
   struct entity_handle target;
-  float move_timer;
   float speed;
   float interaction_radius;
   enum sprite sprite;
+  enum animation animation;
   enum animation state_animation[STM_AMOUNT];
   float change_frame_timer;
   uint32_t current_frame;
   enum entity_state state;
 };
+
+static inline void
+entity_change_state(struct entity *entity, enum entity_state state) {
+  entity->state = state;
+  entity->change_frame_timer = 0.0f;
+  entity->current_frame = 0.0f;
+}
 
 void entity_add_flags(struct entity *entity, enum entity_flag flags);
 void entity_remove_flags(struct entity *entity, enum entity_flag flags);

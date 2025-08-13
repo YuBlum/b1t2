@@ -54,15 +54,29 @@ def lexer_chop(err, expected=[]):
     lexer_at += 1
     return token
 
+is_comment = False
 for line in src.splitlines():
     chars = list(line)
     i = 0
     while i < len(chars):
+        if is_comment:
+            if i+1 < len(chars) and chars[i] == '*' and chars[i+1] == '/':
+                i += 2
+                is_comment = False
+            else:
+                i += 1
+                continue
         token = ""
         while i < len(chars) and chars[i].isspace():
             i += 1
         if i == len(chars):
             continue
+        if i+1 < len(chars) and chars[i] == '/':
+            if chars[i+1] == '/':
+                break
+            elif chars[i+1] == '*':
+                is_comment = True
+                break;
         if chars[i].isalpha() or chars[i] == '_':
             while i < len(chars) and (chars[i].isalnum() or chars[i] == '_'):
                 token+=chars[i]
@@ -114,13 +128,13 @@ src = "void\nentity_manager_update(float dt) {\n"
 if len(on_update_systems) == 0:
     src += "  (void)dt;\n"
 else:
-    src += "  for (uint32_t i = 0; i < entities.cached_amount; i++) {\n"
-    src += "    auto e = entities.cached[i];\n"
+    src += "  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {\n"
+    src += "    auto e = g_entities.cached[i];\n"
     src += "    e->flags = e->next_flags;\n"
     src += "  }\n"
     for system in on_update_systems:
-        src += "  for (uint32_t i = 0; i < entities.cached_amount; i++) {\n"
-        src += "    auto e = entities.cached[i];\n"
+        src += "  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {\n"
+        src += "    auto e = g_entities.cached[i];\n"
         src += "    if (entity_get_flags(e, "
         for idx, flag in enumerate(system["flags"]):
             if idx > 0:
@@ -130,8 +144,8 @@ else:
 src += "}\n\n"
 src += "void\nentity_manager_render(void) {\n"
 for system in on_render_systems:
-    src += "  for (uint32_t i = 0; i < entities.cached_amount; i++) {\n"
-    src += "    auto e = entities.cached[i];\n"
+    src += "  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {\n"
+    src += "    auto e = g_entities.cached[i];\n"
     src += "    if (entity_get_flags(e, "
     for idx, flag in enumerate(system["flags"]):
         if idx > 0:

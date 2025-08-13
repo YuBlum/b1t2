@@ -37,8 +37,8 @@
 #define UNIT_PER_PIXEL 16
 #define UNIT_ONE_PIXEL (1.0f/(float)UNIT_PER_PIXEL)
 #define GAME_W_PIXEL 320
-#define GAME_H_PIXEL 320
-#define GAME_S 2
+#define GAME_H_PIXEL 240
+#define GAME_S 3
 #define GAME_W (GAME_W_PIXEL/(float)UNIT_PER_PIXEL)
 #define GAME_H (GAME_H_PIXEL/(float)UNIT_PER_PIXEL)
 #define GAME_LEFT   (-GAME_W * 0.5f)
@@ -51,6 +51,8 @@
 static_assert((GAME_W_PIXEL % UNIT_PER_PIXEL) == 0, "GAME_W_PIXEL has to be a multiple of UNIT_PER_PIXEL");
 static_assert((GAME_H_PIXEL % UNIT_PER_PIXEL) == 0, "GAME_H_PIXEL has to be a multiple of UNIT_PER_PIXEL");
 
-#define GAME_TITLE "game"
+#define WINDOW_W (GAME_S*GAME_W_PIXEL)
+#define WINDOW_H (GAME_S*GAME_H_PIXEL)
+#define WINDOW_TITLE "game"
 
 #endif/*__CORE_H__*/

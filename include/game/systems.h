@@ -3,6 +3,7 @@
 
 #include "game/entity.h"
 
+void follow_cursor(struct entity *self, float dt);
 void keyboard_control(struct entity *self, float dt);
 void move(struct entity *self, float dt);
 void move_held(struct entity *self, float dt);
@@ -12,7 +13,7 @@ void follow(struct entity *self, float dt);
 void change_facing(struct entity *self, float dt);
 void update_state(struct entity *self, float dt);
 void update_animation(struct entity *self, float dt);
-void render_state_animation(struct entity *self);
+void render_animation(struct entity *self);
 void render_sprite(struct entity *self);
 void render_rect(struct entity *self);
 void render_radius(struct entity *self);

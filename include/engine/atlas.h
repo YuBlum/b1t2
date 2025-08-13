@@ -4,9 +4,9 @@
 #include "engine/math.h"
 #include "engine/sprites.h"
 
-#define ATLAS_WIDTH 256
+#define ATLAS_WIDTH 512
 #define ATLAS_HEIGHT 64
-#define ATLAS_PIXEL_W (1.0f/256)
+#define ATLAS_PIXEL_W (1.0f/512)
 #define ATLAS_PIXEL_H (1.0f/64)
 
 static const uint8_t g_atlas_data[ATLAS_WIDTH*ATLAS_HEIGHT*4] = {
@@ -15,52 +15,81 @@ static const uint8_t g_atlas_data[ATLAS_WIDTH*ATLAS_HEIGHT*4] = {
 
 static const struct v2 g_atlas_sprite_positions[SPRITES_AMOUNT] = {
   { 0.0f * ATLAS_PIXEL_W, 0.0f * ATLAS_PIXEL_H },
-  { 168.0f * ATLAS_PIXEL_W, 0.0f * ATLAS_PIXEL_H },
-  { 169.0f * ATLAS_PIXEL_W, 0.0f * ATLAS_PIXEL_H },
+  { 456.0f * ATLAS_PIXEL_W, 0.0f * ATLAS_PIXEL_H },
+  { 457.0f * ATLAS_PIXEL_W, 0.0f * ATLAS_PIXEL_H },
+  { 485.0f * ATLAS_PIXEL_W, 0.0f * ATLAS_PIXEL_H },
   { 0.0f * ATLAS_PIXEL_W, 24.0f * ATLAS_PIXEL_H },
 };
 
 static const struct v2 g_atlas_sprite_sizes[SPRITES_AMOUNT] = {
-  { 168.0f * ATLAS_PIXEL_W, 24.0f * ATLAS_PIXEL_H },
+  { 456.0f * ATLAS_PIXEL_W, 24.0f * ATLAS_PIXEL_H },
   { 1.0f * ATLAS_PIXEL_W, 1.0f * ATLAS_PIXEL_H },
+  { 28.0f * ATLAS_PIXEL_W, 7.0f * ATLAS_PIXEL_H },
   { 16.0f * ATLAS_PIXEL_W, 16.0f * ATLAS_PIXEL_H },
   { 96.0f * ATLAS_PIXEL_W, 16.0f * ATLAS_PIXEL_H },
 };
 
 static const struct v2 g_atlas_sprite_half_sizes[SPRITES_AMOUNT] = {
-  { 84.0f * UNIT_ONE_PIXEL, 12.0f * UNIT_ONE_PIXEL },
+  { 228.0f * UNIT_ONE_PIXEL, 12.0f * UNIT_ONE_PIXEL },
   { 0.5f * UNIT_ONE_PIXEL, 0.5f * UNIT_ONE_PIXEL },
+  { 14.0f * UNIT_ONE_PIXEL, 3.5f * UNIT_ONE_PIXEL },
   { 8.0f * UNIT_ONE_PIXEL, 8.0f * UNIT_ONE_PIXEL },
   { 48.0f * UNIT_ONE_PIXEL, 8.0f * UNIT_ONE_PIXEL },
 };
 
-static const float g_atlas_animation_durations_player_idle[4] = {
+static const float g_atlas_animation_durations_player_idle[8] = {
   0.3,
   0.1,
+  0.15,
+  0.15,
+  0.3,
+  0.15,
   0.15,
   0.1,
 };
 
-static const float g_atlas_animation_durations_player_walk[3] = {
-  0.15,
-  0.15,
-  0.15,
+static const float g_atlas_animation_durations_player_walk[11] = {
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+  0.08,
+};
+
+static const float g_atlas_animation_durations_aim_idle[4] = {
+  0.3,
+  0.1,
+  0.3,
+  0.1,
 };
 
 static const struct animation_data g_atlas_animations[ANIMATIONS_AMOUNT] = {
   {
     .durations = g_atlas_animation_durations_player_idle,
     .frame_width = 24.0f * ATLAS_PIXEL_W,
-    .frames_amount = 4,
+    .frames_amount = 8,
     .first_frame = 0,
     .sprite = SPR_PLAYER
   },
   {
     .durations = g_atlas_animation_durations_player_walk,
     .frame_width = 24.0f * ATLAS_PIXEL_W,
-    .frames_amount = 3,
-    .first_frame = 4,
+    .frames_amount = 11,
+    .first_frame = 8,
     .sprite = SPR_PLAYER
+  },
+  {
+    .durations = g_atlas_animation_durations_aim_idle,
+    .frame_width = 7.0f * ATLAS_PIXEL_W,
+    .frames_amount = 4,
+    .first_frame = 0,
+    .sprite = SPR_AIM
   },
 };
 

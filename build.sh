@@ -66,6 +66,11 @@ if ! ./generate_systems.py; then
   exit 1
 fi
 
+if ! ./generate_atlas.py; then
+  echo "updating the atlas failed"
+  exit 1
+fi
+
 if ! $CC $FLAGS $DEF $SRCS $LIBS $INCS -o $OUT; then
   echo "compilation failed"
   exit 1

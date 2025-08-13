@@ -284,9 +284,14 @@ renderer_submit(void) {
 #endif
 }
 
+static struct animation_data g_animation_stub;
+
 const struct animation_data *
 renderer_animation_get_data(enum animation animation) {
-  if (animation >= ANIMATIONS_AMOUNT) return 0;
+  if (animation >= ANIMATIONS_AMOUNT) {
+    g_animation_stub = (struct animation_data) { 0 };
+    return &g_animation_stub;
+  }
   return &g_atlas_animations[animation];
 }
 

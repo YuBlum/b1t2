@@ -8,16 +8,17 @@
 #include "game/sound.h"
 #include "game/entity.h"
 
-#define WINDOW_W (GAME_W_PIXEL * GAME_S)
-#define WINDOW_H (GAME_H_PIXEL * GAME_S)
-
 void
 test_entities(void) {
-  auto player = entity_make(STATE_MACHINE|NOT_MOVING|KEYBOARD_CONTROLLED|HOLDING|FACING);
+  auto cursor = entity_make(RENDER_ANIMATION|FOLLOW_CURSOR);
+  auto player = entity_make(RENDER_ANIMATION|STATE_MACHINE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|FACING);
   auto flower = entity_make(RENDER_RECT|FOLLOW);
 
+  cursor->animation = ANIM_AIM_IDLE;
+  cursor->scale     = V2S(1.0f);
+
   player->position                  = V2S(0.0f);
-  player->speed                     = 8.0f;
+  player->speed                     = 6.0f;
   player->target                    = entity_get_handle(flower);
   player->size                      = V2(1.0f, 1.0f);
   player->interaction_radius        = 1.5f;
@@ -46,7 +47,7 @@ game_loop(void) {
 int
 main(void) {
   srand(time(0));
-  if (!window_make(WINDOW_W, WINDOW_H)) return 1;
+  if (!window_make()) return 1;
   if (!mixer_make()) {
     window_destroy();
     return 1;

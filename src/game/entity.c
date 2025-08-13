@@ -6,12 +6,13 @@
 static struct entity_manager {
   struct entity   *cached[ENTITY_CAP]; 
   struct entity    data[ENTITY_CAP];
+  struct entity    stub;
   uint32_t         generations[ENTITY_CAP];
   uint32_t         cached_index[ENTITY_CAP]; 
   uint32_t         free_list[ENTITY_CAP];
   uint32_t         cached_amount;
   uint32_t         free_list_amount;
-} entities;
+} g_entities;
 
 #include "game/entities_update_and_render_impl.h"
 
@@ -33,16 +34,16 @@ entity_get_flags(struct entity *entity, enum entity_flag flags) {
 struct entity *
 entity_make(enum entity_flag flags) {
   #if DEV
-  if (!entities.free_list_amount) {
-    log_errorlf("%s: trying to make too many entities", __func__);
+  if (!g_entities.free_list_amount) {
+    log_errorlf("%s: trying to make too many g_entities", __func__);
     return 0;
   }
   #endif
-  auto index = entities.free_list[--entities.free_list_amount];
-  entities.generations[index]++;
-  auto entity = &entities.data[index];
-  entities.cached_index[index] = entities.cached_amount;
-  entities.cached[entities.cached_amount++] = entity;
+  auto index = g_entities.free_list[--g_entities.free_list_amount];
+  g_entities.generations[index]++;
+  auto entity = &g_entities.data[index];
+  g_entities.cached_index[index] = g_entities.cached_amount;
+  g_entities.cached[g_entities.cached_amount++] = entity;
   *entity = (struct entity) { 0 };
   entity->next_flags = flags|ALIVE;
   entity->flags      = entity->next_flags;
@@ -52,7 +53,7 @@ entity_make(enum entity_flag flags) {
 
 void
 entity_destroy(struct entity *entity) {
-  auto index = (uint32_t)(entity - entities.data);
+  auto index = (uint32_t)(entity - g_entities.data);
   #if DEV
   if (index >= ENTITY_CAP) {
     log_errorlf("%s: invalid entity", __func__);
@@ -61,21 +62,29 @@ entity_destroy(struct entity *entity) {
   #endif
   if (!entity_get_flags(entity, ALIVE)) return;
   entity->flags = NO_FLAGS;
-  entities.free_list[entities.free_list_amount++] = index;
-  entities.cached[entities.cached_index[index]] = entities.cached[--entities.cached_amount];
+  g_entities.free_list[g_entities.free_list_amount++] = index;
+  g_entities.cached[g_entities.cached_index[index]] = g_entities.cached[--g_entities.cached_amount];
 }
 
 struct entity *
 entity_get_data(struct entity_handle handle) {
-  if (handle.index >= ENTITY_CAP || handle.generation != entities.generations[handle.index]) return 0;
-  auto e = &entities.data[handle.index];
-  return entity_get_flags(e, ALIVE) ? e : 0;
+  if (handle.index >= ENTITY_CAP || handle.generation != g_entities.generations[handle.index]) {
+    g_entities.stub = (struct entity) { 0 };
+    return &g_entities.stub;
+  }
+  auto e = &g_entities.data[handle.index];
+  if (!entity_get_flags(e, ALIVE)) {
+    g_entities.stub = (struct entity) { 0 };
+    return &g_entities.stub;
+  }
+  return e;
 }
 
 struct entity_handle
 entity_get_handle(struct entity *entity) {
+  if (entity == &g_entities.stub) return ENTITY_NONE;
   struct entity_handle handle;
-  handle.index = (uint32_t)(entity - entities.data);
+  handle.index = (uint32_t)(entity - g_entities.data);
   #if DEV
   if (handle.index >= ENTITY_CAP) {
     log_errorlf("%s: invalid entity", __func__);
@@ -84,15 +93,15 @@ entity_get_handle(struct entity *entity) {
     return handle;
   }
   #endif
-  handle.generation = entities.generations[handle.index];
+  handle.generation = g_entities.generations[handle.index];
   return handle;
 }
 
 void
 entity_manager_init(void) {
-  entities.free_list_amount = 0;
+  g_entities.free_list_amount = 0;
   for (int64_t i = ENTITY_CAP - 1; i >= 0; i--) {
-    entities.free_list[entities.free_list_amount++] = i;
+    g_entities.free_list[g_entities.free_list_amount++] = i;
   }
 }
 
