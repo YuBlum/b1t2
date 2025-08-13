@@ -6,6 +6,8 @@ enum sprite {
   SPR_PIXEL,
   SPR_AIM,
   SPR_TEST,
+  SPR_FLOWER,
+  SPR_GUN,
   SPR_PLAYER_IDLE,
   SPRITES_AMOUNT
 };
@@ -13,6 +15,7 @@ enum sprite {
 enum animation {
   ANIM_PLAYER_IDLE = 0,
   ANIM_PLAYER_WALK,
+  ANIM_AIM_PRESSED,
   ANIM_AIM_IDLE,
   ANIMATIONS_AMOUNT
 };

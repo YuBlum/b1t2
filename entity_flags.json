@@ -4,6 +4,7 @@
     "RENDER_SPRITE",
     "RENDER_ANIMATION",
     "RENDER_RADIUS",
+    "RENDER_COLLIDER",
     "MOVABLE",
     "KEYBOARD_CONTROLLED",
     "HOLDING",
@@ -12,7 +13,11 @@
     "FOLLOW",
     "STATE_MACHINE",
     "FACING",
-    "FOLLOW_CURSOR"
+    "FOLLOW_CURSOR",
+    "LOOPABLE",
+    "DEPTH_BY_Y",
+    "HAS_GUN",
+    "HOLDING_GUN"
   ]
 }
 

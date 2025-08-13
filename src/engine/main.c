@@ -10,12 +10,15 @@
 
 void
 test_entities(void) {
-  auto cursor = entity_make(RENDER_ANIMATION|FOLLOW_CURSOR);
-  auto player = entity_make(RENDER_ANIMATION|STATE_MACHINE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|FACING);
-  auto flower = entity_make(RENDER_RECT|FOLLOW);
+  auto cursor = entity_make(RENDER_ANIMATION|STATE_MACHINE|FOLLOW_CURSOR);
+  auto player = entity_make(RENDER_ANIMATION|STATE_MACHINE|LOOPABLE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|FACING|DEPTH_BY_Y|HAS_GUN);
+  auto flower = entity_make(RENDER_COLLIDER|RENDER_SPRITE|FOLLOW|DEPTH_BY_Y);
+  auto gun    = entity_make(NO_FLAGS);
 
-  cursor->animation = ANIM_AIM_IDLE;
-  cursor->scale     = V2S(1.0f);
+  cursor->state_animation[STM_IDLE]    = ANIM_AIM_IDLE;
+  cursor->state_animation[STM_PRESSED] = ANIM_AIM_PRESSED;
+  cursor->scale                        = V2S(1.0f);
+  cursor->depth                        = -INFINITY;
 
   player->position                  = V2S(0.0f);
   player->speed                     = 6.0f;
@@ -25,10 +28,17 @@ test_entities(void) {
   player->state_animation[STM_IDLE] = ANIM_PLAYER_IDLE;
   player->state_animation[STM_WALK] = ANIM_PLAYER_WALK;
   player->scale                     = V2S(1.0f);
+  player->gun                       = entity_get_handle(gun);
 
-  flower->position = player->position;
-  flower->size     = V2(0.5f, 0.5f);
-  flower->speed    = 15.0f;
+  flower->position  = player->position;
+  flower->sprite    = SPR_FLOWER;
+  flower->size      = V2(0.5f, 0.5f);
+  flower->speed     = 15.0f;
+  flower->scale     = V2S(1.0f);
+  flower->origin    = V2(-0.1f, -0.5f);
+
+  gun->sprite = SPR_GUN;
+  gun->scale  = V2S(1.0f);
 }
 
 static float dt;
@@ -36,7 +46,8 @@ static float dt;
 bool
 game_loop(void) {
   dt = window_frame_begin();
-  if (window_is_key_down(K_EXIT)) window_close();
+  if (window_is_key_down(KEY_EXIT)) window_close();
+  global_update(dt);
   entity_manager_update(dt);
   entity_manager_render();
   renderer_submit();

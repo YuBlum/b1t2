@@ -8,6 +8,7 @@
 enum entity_state {
   STM_IDLE = 0,
   STM_WALK,
+  STM_PRESSED = STM_WALK,
   STM_AMOUNT
 };
 
@@ -30,7 +31,11 @@ struct entity {
   struct v2 velocity;
   struct v2 size;
   struct v2 scale;
+  struct v2 origin;
   struct entity_handle target;
+  struct entity_handle gun;
+  float depth;
+  float angle;
   float speed;
   float interaction_radius;
   enum sprite sprite;
@@ -46,6 +51,7 @@ entity_change_state(struct entity *entity, enum entity_state state) {
   entity->state = state;
   entity->change_frame_timer = 0.0f;
   entity->current_frame = 0.0f;
+  entity->animation = entity->state_animation[state];
 }
 
 void entity_add_flags(struct entity *entity, enum entity_flag flags);

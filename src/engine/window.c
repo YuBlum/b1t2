@@ -13,6 +13,7 @@ struct window {
   float time;
   bool keys[KEY_AMOUNT];
   bool pkeys[KEY_AMOUNT];
+  bool btns[BUTTON_AMOUNT];
 };
 
 static struct window g_window;
@@ -22,14 +23,23 @@ key_callback(GLFWwindow* _window, int key, int _scancode, int action, int _mods)
   (void)_window; (void)_scancode; (void) _mods;
   if (action != GLFW_PRESS && action != GLFW_RELEASE) return;
   switch (key) {
-    case GLFW_KEY_ESCAPE: g_window.keys[K_EXIT]      = action == GLFW_PRESS; break;
-    case GLFW_KEY_D:      g_window.keys[K_RIGHT]     = action == GLFW_PRESS; break;
-    case GLFW_KEY_A:      g_window.keys[K_LEFT]      = action == GLFW_PRESS; break;
-    case GLFW_KEY_W:      g_window.keys[K_UP]        = action == GLFW_PRESS; break;
-    case GLFW_KEY_S:      g_window.keys[K_DOWN]      = action == GLFW_PRESS; break;
-    case GLFW_KEY_Z:      g_window.keys[K_INTERACT]  = action == GLFW_PRESS; break;
-    case GLFW_KEY_R:      g_window.keys[K_RESTART]   = action == GLFW_PRESS; break;
-    case GLFW_KEY_F1:     g_window.keys[K_COLLIDERS] = action == GLFW_PRESS; break;
+    case GLFW_KEY_ESCAPE: g_window.keys[KEY_EXIT]      = action == GLFW_PRESS; break;
+    case GLFW_KEY_D:      g_window.keys[KEY_RIGHT]     = action == GLFW_PRESS; break;
+    case GLFW_KEY_A:      g_window.keys[KEY_LEFT]      = action == GLFW_PRESS; break;
+    case GLFW_KEY_W:      g_window.keys[KEY_UP]        = action == GLFW_PRESS; break;
+    case GLFW_KEY_S:      g_window.keys[KEY_DOWN]      = action == GLFW_PRESS; break;
+    case GLFW_KEY_SPACE:  g_window.keys[KEY_INTERACT]  = action == GLFW_PRESS; break;
+    case GLFW_KEY_F1:     g_window.keys[KEY_DEBUG0]    = action == GLFW_PRESS; break;
+  }
+}
+
+static void
+button_callback(GLFWwindow* _window, int button, int action, int _mods) {
+  (void)_window; (void) _mods;
+  if (action != GLFW_PRESS && action != GLFW_RELEASE) return;
+  switch (button) {
+    case GLFW_MOUSE_BUTTON_LEFT:  g_window.btns[BTN_LEFT]  = action == GLFW_PRESS; break;
+    case GLFW_MOUSE_BUTTON_RIGHT: g_window.btns[KEY_RIGHT] = action == GLFW_PRESS; break;
   }
 }
 
@@ -76,6 +86,7 @@ window_make(void) {
   (void)memset(g_window.keys, false, sizeof (bool) * KEY_AMOUNT);
   (void)glfwSetKeyCallback(g_window.handle, key_callback);
   (void)glfwSetCursorPosCallback(g_window.handle, cursor_position_callback);
+  (void)glfwSetMouseButtonCallback(g_window.handle, button_callback);
   glfwSetInputMode(g_window.handle, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
   log_infol("window input setup");
   log_infol("window creation complete!");
@@ -166,6 +177,28 @@ window_is_key_release(enum key key) {
   }
 #endif
   return g_window.pkeys[key] && !g_window.keys[key];
+}
+
+bool
+window_is_button_down(enum button btn) {
+#if DEV
+  if (btn >= BUTTON_AMOUNT) {
+    log_errorlf("%s: passing invalid button", __func__);
+    return false;
+  }
+#endif
+  return g_window.btns[btn];
+}
+
+bool
+window_is_button_up(enum button btn) {
+#if DEV
+  if (btn >= BUTTON_AMOUNT) {
+    log_errorlf("%s: passing invalid button", __func__);
+    return false;
+  }
+#endif
+  return !g_window.btns[btn];
 }
 
 struct v2

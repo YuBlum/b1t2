@@ -18,6 +18,10 @@ entity_manager_update(float dt) {
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];
+    if (entity_get_flags(e, DEPTH_BY_Y)) depth_by_y(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
     if (entity_get_flags(e, HOLDING)) move_held(e, dt);
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
@@ -38,11 +42,31 @@ entity_manager_update(float dt) {
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];
-    if (entity_get_flags(e, STATE_MACHINE)) update_state(e, dt);
+    if (entity_get_flags(e, MOVABLE|STATE_MACHINE)) update_movable_state(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, FOLLOW_CURSOR|STATE_MACHINE)) update_cursor_state(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, RENDER_ANIMATION|LOOPABLE)) loop_animation(e, dt);
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];
     if (entity_get_flags(e, RENDER_ANIMATION)) update_animation(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, HAS_GUN|NOT_HOLDING)) activate_gun(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, HAS_GUN|HOLDING)) deactivate_gun(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, HOLDING_GUN)) update_gun(e, dt);
   }
 }
 
@@ -63,5 +87,9 @@ entity_manager_render(void) {
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];
     if (entity_get_flags(e, RENDER_RADIUS)) render_radius(e);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, RENDER_COLLIDER)) render_collider(e);
   }
 }
