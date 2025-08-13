@@ -107,7 +107,7 @@ ON_UPDATE_SYSTEM(update_cursor_state, FOLLOW_CURSOR, STATE_MACHINE) {
 ON_UPDATE_SYSTEM(loop_animation, RENDER_ANIMATION, LOOPABLE) {
   (void)dt;
   auto animation = renderer_animation_get_data(self->animation);
-  if (self->current_frame >= animation->frames_amount-1) self->current_frame = 0;
+  if (self->current_frame >= animation->frames_amount-1 && self->previous_frame >= animation->frames_amount-1) self->current_frame = 0;
 }
 
 ON_UPDATE_SYSTEM(update_animation, RENDER_ANIMATION) {
@@ -115,6 +115,7 @@ ON_UPDATE_SYSTEM(update_animation, RENDER_ANIMATION) {
   self->change_frame_timer += dt;
   if (self->change_frame_timer < animation->durations[self->current_frame]) return;
   self->change_frame_timer = 0;
+  self->previous_frame = self->current_frame;
   self->current_frame++;
   if (self->current_frame > animation->frames_amount-1) self->current_frame = animation->frames_amount-1;
 }

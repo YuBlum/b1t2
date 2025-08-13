@@ -43,6 +43,7 @@ struct entity {
   enum animation state_animation[STM_AMOUNT];
   float change_frame_timer;
   uint32_t current_frame;
+  uint32_t previous_frame;
   enum entity_state state;
 };
 
