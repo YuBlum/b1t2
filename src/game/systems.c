@@ -151,7 +151,7 @@ ON_UPDATE_SYSTEM(update_gun, HOLDING_GUN) {
     bullet->speed     = 40.0f;
     bullet->size      = V2S(2*UNIT_ONE_PIXEL);
   } else if (window_is_button_down(BTN_LEFT)) {
-    gun->position = v2_sub(gun->position, v2_muls(gun->direction, 0.2f));
+    gun->position = v2_sub(gun->position, v2_muls(gun->direction, 0.3f));
   }
 }
 

@@ -4,7 +4,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 NAME="game"
-FLAGS="-Wall -Wextra -Werror -Wpedantic -std=c23"
+FLAGS="-Wall -Wextra -Wno-override-init -Werror -Wpedantic -std=c23"
 DEF="-DDEV"
 SRCS=$(find ./src/ -type f -name "*.c" ! -path "./src/engine/x64win.c" ! -path "./src/engine/x64lin.c" ! -path "./src/engine/wasm.c" | tr '\n' ' ')
 LIBS="\

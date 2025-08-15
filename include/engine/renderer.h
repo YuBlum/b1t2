@@ -24,13 +24,13 @@ void renderer_set_offset(struct v2 offset);
 const struct animation_data *renderer_animation_get_data(enum animation animation);
 
 void renderer_request_sprite(enum sprite sprite, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth);
+
+void renderer_request_sprite(enum sprite sprite, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth);
 void renderer_request_sprite_slice(enum sprite sprite, struct v2 top_left, struct v2 size, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth);
 void renderer_request_animation(enum animation animation, uint32_t frame, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth);
 
-#if DEV
 void renderer_request_circle(struct v2 position, float radius, struct color color, float opacity);
 void renderer_request_rect(struct v2 position, struct v2 size, struct color color, float opacity, float depth);
 void renderer_request_point(struct v2 position, struct color color, float opacity, float depth);
-#endif
 
 #endif/*__RENDERER_H__*/

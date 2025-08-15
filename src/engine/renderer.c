@@ -23,7 +23,7 @@ struct vertex {
   float        opacity;
 };
 
-#define QUAD_CAPACITY 10000
+#define QUAD_CAPACITY 100000
 #define INDEX_CAPACITY (QUAD_CAPACITY*6)
 #define VERTEX_CAPACITY (QUAD_CAPACITY*4)
 
@@ -44,20 +44,16 @@ struct renderer {
   struct quad_vertices vertices[QUAD_CAPACITY];
   struct quad_indices indices[QUAD_CAPACITY];
   struct index_sort indices_to_sort[QUAD_CAPACITY];
-#if DEV
   struct quad_vertices vertices_circle[QUAD_CAPACITY];
   struct quad_indices indices_circle[QUAD_CAPACITY];
   uint32_t circles_amount;
-#endif
   struct v2 offset;
   uint32_t quads_amount;
   uint32_t sh_default;
   int32_t  sh_default_proj;
   uint32_t texture_atlas;
-#if DEV
   uint32_t sh_circle;
   int32_t  sh_circle_proj;
-#endif
 };
 
 static struct renderer g_renderer;
@@ -173,17 +169,18 @@ renderer_make(void) {
   glUseProgram(g_renderer.sh_default);
   glUniformMatrix3fv(g_renderer.sh_default_proj, 1, false, g_projection);
   log_infol("created default shader");
-#if DEV
   g_renderer.sh_circle = shader_program_make(&SH_CIRCLE_VERT, &SH_CIRCLE_FRAG);
   if (!g_renderer.sh_circle) {
     log_errorl("couldn't create circle shader");
     return false;
   }
   g_renderer.sh_circle_proj = glGetUniformLocation(g_renderer.sh_circle, "u_proj");
+#if DEV
   if (g_renderer.sh_circle_proj < 0) {
     log_errorl("couldn't get 'u_proj' location from circle shader");
     return false;
   }
+#endif
   glUseProgram(g_renderer.sh_circle);
   glUniformMatrix3fv(g_renderer.sh_circle_proj, 1, false, g_projection);
   for (uint32_t i = 0; i < QUAD_CAPACITY; i++) {
@@ -195,7 +192,6 @@ renderer_make(void) {
     g_renderer.indices_circle[i].i[5] = (i * 4) + 0;
   }
   log_infol("created circle shader");
-#endif
   glGenTextures(1, &g_renderer.texture_atlas);
   glBindTexture(GL_TEXTURE_2D, g_renderer.texture_atlas);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -275,13 +271,11 @@ renderer_submit(void) {
   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, g_renderer.quads_amount * sizeof (struct quad_indices), g_renderer.indices);
   glDrawElements(GL_TRIANGLES, g_renderer.quads_amount * 6, GL_UNSIGNED_INT, 0);
   g_renderer.quads_amount = 0;
-#if DEV
   glUseProgram(g_renderer.sh_circle);
   glBufferSubData(GL_ARRAY_BUFFER, 0, g_renderer.circles_amount * sizeof (struct quad_vertices), g_renderer.vertices_circle);
   glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, g_renderer.circles_amount * sizeof (struct quad_indices), g_renderer.indices_circle);
   glDrawElements(GL_TRIANGLES, g_renderer.circles_amount * 6, GL_UNSIGNED_INT, 0);
   g_renderer.circles_amount = 0;
-#endif
 }
 
 static struct animation_data g_animation_stub;
@@ -407,7 +401,6 @@ renderer_request_animation(enum animation animation, uint32_t frame, struct v2 p
   renderer_request_sprite_slice(sprite, top_left, size, position, origin, angle, scale, color, opacity, depth);
 }
 
-#if DEV
 void
 renderer_request_circle(struct v2 position, float radius, struct color color, float opacity) {
   if (g_renderer.circles_amount + 1 >= QUAD_CAPACITY) {
@@ -462,4 +455,3 @@ renderer_request_point(struct v2 position, struct color color, float opacity, fl
     depth
   );
 }
-#endif
