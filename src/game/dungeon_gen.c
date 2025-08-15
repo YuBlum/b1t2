@@ -1,10 +1,12 @@
 #include "engine/renderer.h"
+#include "engine/window.h"
 #include <string.h>
 
 #define MAP_W 50
 #define MAP_H 50
 #define MIN_SECTION_SIZE 10
-#define ROOMS_AMOUNT 5
+#define ROOMS_AMOUNT 10
+#define MIN_ROOM_SIZE 5
 
 enum split_direction {
   SPLIT_HORIZONTAL = 0,
@@ -166,14 +168,21 @@ dungeon_gen_init(struct arena *arena) {
   for (uint32_t i = 0; i < sections.amount; i++) indices[i] = i;
   for (uint32_t i = 0; i < ROOMS_AMOUNT && sections.amount; i++) {
     uint32_t idx = rand() % sections.amount;
-    struct v2u position = { sections.data[idx].position.x + 2, sections.data[idx].position.y + 2 };
-    struct v2u size     = { sections.data[idx].size    .x - 2, sections.data[idx].size    .y - 2 };
+    struct v2u position = { sections.data[idx].position.x, sections.data[idx].position.y };
+    struct v2u size     = { rand_from_to(MIN_ROOM_SIZE, sections.data[idx].size.x), rand_from_to(MIN_ROOM_SIZE, sections.data[idx].size.y) };
     for (uint32_t y = 0; y < size.y; y++) {
       for (uint32_t x = 0; x < size.x; x++) {
         map_set_point(position.x + x, position.y + y, true);
       }
     }
     sections.data[idx] = sections.data[--sections.amount];
+  }
+}
+
+void
+dungeon_gen_update(struct arena *arena) {
+  if (window_is_key_press(KEY_INTERACT)) {
+    dungeon_gen_init(arena);
   }
 }
 
@@ -185,7 +194,7 @@ dungeon_gen_render(void) {
         (MAP_H * 0.5f - y) * UNIT_ONE_PIXEL,
         (x - MAP_W * 0.5f) * UNIT_ONE_PIXEL,
       };
-      renderer_request_point(position, map[y*MAP_W+x] ? GREEN : RED, 1.0f, 0.0f);
+      renderer_request_point(position, map[y*MAP_W+x] ? WHITE : BLACK, 1.0f, 0.0f);
     }
   }
 }

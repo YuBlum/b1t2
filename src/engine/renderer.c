@@ -290,7 +290,7 @@ renderer_animation_get_data(enum animation animation) {
 }
 
 void
-renderer_request_sprite(enum sprite sprite, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth) {
+_renderer_request_sprite(enum sprite sprite, struct v2 position, struct renderer_params p) {
 #if DEV
   if (g_renderer.quads_amount + 1 >= QUAD_CAPACITY) {
     log_warnlf("%s: trying to request to much quads for rendering. increase QUAD_CAPACITY", __func__);
@@ -305,7 +305,7 @@ renderer_request_sprite(enum sprite sprite, struct v2 position, struct v2 origin
   struct v2 hsiz = g_atlas_sprite_half_sizes[sprite],
             tpos = g_atlas_sprite_positions[sprite],
             tsiz = g_atlas_sprite_sizes[sprite],
-            cos_sin = { cosf(angle), sinf(angle) };
+            cos_sin = { cosf(p.angle), sinf(p.angle) };
   struct vertex *vertices = g_renderer.vertices[g_renderer.quads_amount].v;
   vertices[0].position = position;
   vertices[1].position = position;
@@ -315,29 +315,29 @@ renderer_request_sprite(enum sprite sprite, struct v2 position, struct v2 origin
   vertices[1].texcoord = v2_add(tpos, V2(tsiz.x, tsiz.y));
   vertices[2].texcoord = v2_add(tpos, V2(tsiz.x, 0.0f  ));
   vertices[3].texcoord = v2_add(tpos, V2(0.0f  , 0.0f  ));
-  vertices[0].origin = v2_mul(v2_sub(V2(-hsiz.x, -hsiz.y), origin), scale);
-  vertices[1].origin = v2_mul(v2_sub(V2(+hsiz.x, -hsiz.y), origin), scale);
-  vertices[2].origin = v2_mul(v2_sub(V2(+hsiz.x, +hsiz.y), origin), scale);
-  vertices[3].origin = v2_mul(v2_sub(V2(-hsiz.x, +hsiz.y), origin), scale);
+  vertices[0].origin = v2_mul(v2_sub(V2(-hsiz.x, -hsiz.y), p.origin), p.scale);
+  vertices[1].origin = v2_mul(v2_sub(V2(+hsiz.x, -hsiz.y), p.origin), p.scale);
+  vertices[2].origin = v2_mul(v2_sub(V2(+hsiz.x, +hsiz.y), p.origin), p.scale);
+  vertices[3].origin = v2_mul(v2_sub(V2(-hsiz.x, +hsiz.y), p.origin), p.scale);
   vertices[0].angle = cos_sin;
   vertices[1].angle = cos_sin;
   vertices[2].angle = cos_sin;
   vertices[3].angle = cos_sin;
-  vertices[0].color = color;
-  vertices[1].color = color;
-  vertices[2].color = color;
-  vertices[3].color = color;
-  vertices[0].opacity = opacity;
-  vertices[1].opacity = opacity;
-  vertices[2].opacity = opacity;
-  vertices[3].opacity = opacity;
-  g_renderer.indices_to_sort[g_renderer.quads_amount].depth = depth;
+  vertices[0].color = p.color;
+  vertices[1].color = p.color;
+  vertices[2].color = p.color;
+  vertices[3].color = p.color;
+  vertices[0].opacity = p.opacity;
+  vertices[1].opacity = p.opacity;
+  vertices[2].opacity = p.opacity;
+  vertices[3].opacity = p.opacity;
+  g_renderer.indices_to_sort[g_renderer.quads_amount].depth = p.depth;
   g_renderer.indices_to_sort[g_renderer.quads_amount].start = g_renderer.quads_amount * 4;
   g_renderer.quads_amount++;
 }
 
 void
-renderer_request_sprite_slice(enum sprite sprite, struct v2 top_left, struct v2 size, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth) {
+_renderer_request_sprite_slice(enum sprite sprite, struct v2 position, struct v2 top_left, struct v2 size, struct renderer_params p) {
 #if DEV
   if (g_renderer.quads_amount + 1 >= QUAD_CAPACITY) {
     log_warnlf("%s: trying to request to much quads for rendering. increase QUAD_CAPACITY", __func__);
@@ -352,7 +352,7 @@ renderer_request_sprite_slice(enum sprite sprite, struct v2 top_left, struct v2 
   struct v2 hsiz = V2(size.x * ATLAS_WIDTH * 0.5f * UNIT_ONE_PIXEL, size.y * ATLAS_HEIGHT * 0.5f * UNIT_ONE_PIXEL),
             tpos = v2_add(g_atlas_sprite_positions[sprite], top_left),
             tsiz = size,
-            cos_sin = { cosf(angle), sinf(angle) };
+            cos_sin = { cosf(p.angle), sinf(p.angle) };
   struct vertex *vertices = g_renderer.vertices[g_renderer.quads_amount].v;
   vertices[0].position = position;
   vertices[1].position = position;
@@ -362,29 +362,29 @@ renderer_request_sprite_slice(enum sprite sprite, struct v2 top_left, struct v2 
   vertices[1].texcoord = v2_add(tpos, V2(tsiz.x, tsiz.y));
   vertices[2].texcoord = v2_add(tpos, V2(tsiz.x, 0.0f  ));
   vertices[3].texcoord = v2_add(tpos, V2(0.0f  , 0.0f  ));
-  vertices[0].origin = v2_mul(v2_sub(V2(-hsiz.x, -hsiz.y), origin), scale);
-  vertices[1].origin = v2_mul(v2_sub(V2(+hsiz.x, -hsiz.y), origin), scale);
-  vertices[2].origin = v2_mul(v2_sub(V2(+hsiz.x, +hsiz.y), origin), scale);
-  vertices[3].origin = v2_mul(v2_sub(V2(-hsiz.x, +hsiz.y), origin), scale);
+  vertices[0].origin = v2_mul(v2_sub(V2(-hsiz.x, -hsiz.y), p.origin), p.scale);
+  vertices[1].origin = v2_mul(v2_sub(V2(+hsiz.x, -hsiz.y), p.origin), p.scale);
+  vertices[2].origin = v2_mul(v2_sub(V2(+hsiz.x, +hsiz.y), p.origin), p.scale);
+  vertices[3].origin = v2_mul(v2_sub(V2(-hsiz.x, +hsiz.y), p.origin), p.scale);
   vertices[0].angle = cos_sin;
   vertices[1].angle = cos_sin;
   vertices[2].angle = cos_sin;
   vertices[3].angle = cos_sin;
-  vertices[0].color = color;
-  vertices[1].color = color;
-  vertices[2].color = color;
-  vertices[3].color = color;
-  vertices[0].opacity = opacity;
-  vertices[1].opacity = opacity;
-  vertices[2].opacity = opacity;
-  vertices[3].opacity = opacity;
-  g_renderer.indices_to_sort[g_renderer.quads_amount].depth = depth;
+  vertices[0].color = p.color;
+  vertices[1].color = p.color;
+  vertices[2].color = p.color;
+  vertices[3].color = p.color;
+  vertices[0].opacity = p.opacity;
+  vertices[1].opacity = p.opacity;
+  vertices[2].opacity = p.opacity;
+  vertices[3].opacity = p.opacity;
+  g_renderer.indices_to_sort[g_renderer.quads_amount].depth = p.depth;
   g_renderer.indices_to_sort[g_renderer.quads_amount].start = g_renderer.quads_amount * 4;
   g_renderer.quads_amount++;
 }
 
 void
-renderer_request_animation(enum animation animation, uint32_t frame, struct v2 position, struct v2 origin, float angle, struct v2 scale, struct color color, float opacity, float depth) {
+_renderer_request_animation(enum animation animation, uint32_t frame, struct v2 position, struct renderer_params p) {
   #if DEV
   if (animation >= ANIMATIONS_AMOUNT) {
     log_warnlf("%s: animation with index '%u' doesn't exists", __func__, animation);
@@ -398,7 +398,7 @@ renderer_request_animation(enum animation animation, uint32_t frame, struct v2 p
   auto sprite = g_atlas_animations[animation].sprite;
   struct v2 size     = { g_atlas_animations[animation].frame_width, g_atlas_sprite_sizes[sprite].y },
             top_left = { size.x * (frame + g_atlas_animations[animation].first_frame), 0.0f };
-  renderer_request_sprite_slice(sprite, top_left, size, position, origin, angle, scale, color, opacity, depth);
+  _renderer_request_sprite_slice(sprite, position, top_left, size, p);
 }
 
 void
@@ -433,12 +433,10 @@ renderer_request_rect(struct v2 position, struct v2 size, struct color color, fl
   renderer_request_sprite(
     SPR_PIXEL,
     position,
-    V2S(0.0f),
-    0.0f,
-    v2_mul(size, V2(UNIT_PER_PIXEL, UNIT_PER_PIXEL)),
-    color,
-    opacity,
-    depth
+    .scale   = v2_mul(size, V2(UNIT_PER_PIXEL, UNIT_PER_PIXEL)),
+    .color   = color,
+    .opacity = opacity,
+    .depth   = depth
   );
 }
 
@@ -447,11 +445,8 @@ renderer_request_point(struct v2 position, struct color color, float opacity, fl
   renderer_request_sprite(
     SPR_PIXEL,
     position,
-    V2S(0.0f),
-    0.0f,
-    V2S(1),
-    color,
-    opacity,
-    depth
+    .color   = color,
+    .opacity = opacity,
+    .depth   = depth
   );
 }

@@ -160,12 +160,10 @@ ON_RENDER_SYSTEM(render_animation, RENDER_ANIMATION) {
     self->animation,
     self->current_frame,
     self->position,
-    self->origin,
-    self->angle,
-    self->scale,
-    WHITE,
-    1.0f,
-    self->depth
+    .origin  = self->origin,
+    .angle   = self->angle,
+    .scale   = self->scale,
+    .depth   = self->depth
   );
 }
 
@@ -173,12 +171,10 @@ ON_RENDER_SYSTEM(render_sprite, RENDER_SPRITE) {
   renderer_request_sprite(
     self->sprite,
     self->position,
-    self->origin,
-    self->angle,
-    self->scale,
-    WHITE,
-    1.0f,
-    self->depth
+    .origin  = self->origin,
+    .angle   = self->angle,
+    .scale   = self->scale,
+    .depth   = self->depth
   );
 }
 
