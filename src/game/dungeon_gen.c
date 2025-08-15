@@ -5,7 +5,7 @@
 #define MAP_W 50
 #define MAP_H 50
 #define MIN_SECTION_SIZE 10
-#define ROOMS_AMOUNT 10
+#define ROOMS_CAP 10
 #define MIN_ROOM_SIZE 5
 
 enum split_direction {
@@ -13,18 +13,33 @@ enum split_direction {
   SPLIT_VERTICAL,
 };
 
+enum room_surrounds {
+  ROOM_UP = 0,
+  ROOM_LEFT,
+  ROOM_DOWN,
+  ROOM_RIGHT,
+  ROOM_SURROUNDS_AMOUNT
+};
+
+struct room {
+  struct room *next;
+  struct v2u center;
+  struct v2u size;
+};
+
 struct section {
-  struct v2u position;
+  struct v2u top_left;
   struct v2u size;
 };
 
 struct bsp_node {
   struct bsp_node *children[2];
+  struct room *room;
   struct section section;
 };
 
-struct sections {
-  struct section *data;
+struct bsp_leafs {
+  struct bsp_node **data;
   uint32_t amount;
   uint32_t capacity;
 };
@@ -34,7 +49,14 @@ struct bsp_list {
   struct bsp_node *node;
 };
 
+static struct room g_rooms[ROOMS_CAP];
+static uint32_t    g_rooms_amount;
 static bool map[MAP_W*MAP_H];
+
+static inline struct v2u room_get_top(uint32_t i)    { return V2U(g_rooms[i].center.x, g_rooms[i].center.y + g_rooms[i].size.y/2); }
+static inline struct v2u room_get_left(uint32_t i)   { return V2U(g_rooms[i].center.x - g_rooms[i].size.x/2, g_rooms[i].center.y); }
+static inline struct v2u room_get_bottom(uint32_t i) { return V2U(g_rooms[i].center.x, g_rooms[i].center.y - g_rooms[i].size.y/2); }
+static inline struct v2u room_get_right(uint32_t i)  { return V2U(g_rooms[i].center.x + g_rooms[i].size.x/2, g_rooms[i].center.y); }
 
 static void
 map_set_point(uint32_t x, uint32_t y, bool value) {
@@ -80,8 +102,8 @@ bsp_make_sections(struct arena *arena, struct bsp_node *root, enum split_directi
   }
   root->children[0]->section.size = size[0];
   root->children[1]->section.size = size[1];
-  root->children[0]->section.position = root->section.position;
-  root->children[1]->section.position = v2u_add(root->section.position, offset);
+  root->children[0]->section.top_left = root->section.top_left;
+  root->children[1]->section.top_left = v2u_add(root->section.top_left, offset);
   for (uint32_t i = 0; i < 2; i++) {
     bool split = false;
     if (size[i].x >= MIN_SECTION_SIZE*2 && size[i].y >= MIN_SECTION_SIZE*2) {
@@ -102,42 +124,42 @@ bsp_make_sections(struct arena *arena, struct bsp_node *root, enum split_directi
       next_direction[i] = SPLIT_VERTICAL;
       split = true;
     }
-    if (split) {
-      current_sections_amount = bsp_make_sections(arena, root->children[i], next_direction[i], current_sections_amount);
-    } else {
-      current_sections_amount++;
-      /*
-      for (uint32_t j = 0; j < root->children[i]->section.size.y; j++) {
-        map_set_point(root->children[i]->section.position.x, root->children[i]->section.position.y + j, true);
-        map_set_point(root->children[i]->section.position.x + root->children[i]->section.size.x-1, root->children[i]->section.position.y + j, true);
-      }
-      for (uint32_t j = 0; j < root->children[i]->section.size.x; j++) {
-        map_set_point(root->children[i]->section.position.x + j, root->children[i]->section.position.y, true);
-        map_set_point(root->children[i]->section.position.x + j, root->children[i]->section.position.y + root->children[i]->section.size.y-1, true);
-      }
-      */
-    }
+    current_sections_amount = split ? bsp_make_sections(arena, root->children[i], next_direction[i], current_sections_amount)
+                                    : current_sections_amount + 1;
   }
   return current_sections_amount;
 }
 
 static void
-bsp_get_sections(struct bsp_node *node, struct sections *sections) {
-  bool is_section = true;
+bsp_get_leafs(struct bsp_node *node, struct bsp_leafs *leafs) {
+  bool is_leaf = true;
   if (node->children[0]) {
-    bsp_get_sections(node->children[0], sections);
-    is_section = false;
+    bsp_get_leafs(node->children[0], leafs);
+    is_leaf = false;
   }
   if (node->children[1]) {
-    bsp_get_sections(node->children[1], sections);
-    is_section = false;
+    bsp_get_leafs(node->children[1], leafs);
+    is_leaf = false;
   }
-  if (!is_section) return;
-  if (sections->amount >= sections->capacity) {
+  if (!is_leaf) return;
+  if (leafs->amount >= leafs->capacity) {
     log_errorlf("%s: unreachable", __func__);
     exit(1);
   }
-  sections->data[sections->amount++] = node->section;
+  leafs->data[leafs->amount++] = node;
+}
+
+static void
+carve_corridor(struct room *a, struct room *b) {
+  uint32_t x0 = a->center.x, y0 = a->center.y,
+           x1 = b->center.x, y1 = b->center.y;
+  if (rand() % 2) {
+    for (uint32_t x = MIN(x0,x1); x <= MAX(x0,x1); x++) map_set_point(x, y0, true);
+    for (uint32_t y = MIN(y0,y1); y <= MAX(y0,y1); y++) map_set_point(x1, y, true);
+  } else {
+    for (uint32_t y = MIN(y0,y1); y <= MAX(y0,y1); y++) map_set_point(x0, y, true);
+    for (uint32_t x = MIN(x0,x1); x <= MAX(x0,x1); x++) map_set_point(x, y1, true);
+  }
 }
 
 void
@@ -145,37 +167,65 @@ dungeon_gen_init(struct arena *arena) {
   memset(map, 0, sizeof (map));
   struct bsp_node root = {
     .section = {
-      .position = { 0, 0 },
+      .top_left = { 0, 0 },
       .size     = { MAP_W, MAP_H }
     }
   };
-  auto sections_capacity = bsp_make_sections(arena, &root, randf() < 0.5f ? SPLIT_VERTICAL : SPLIT_HORIZONTAL, 0);
-  struct sections sections = {
-    .data = arena_push_array(arena, true, struct section, sections_capacity),
-    .amount = 0,
-    .capacity = sections_capacity
-  };
-  auto indices = arena_push_array(arena, true, uint32_t, sections_capacity);
-  if (!sections.data || !indices) {
-    log_errorlf("%s: not enough memory for sections", __func__);
+  struct bsp_leafs leafs;
+  leafs.capacity = bsp_make_sections(arena, &root, randf() < 0.5f ? SPLIT_VERTICAL : SPLIT_HORIZONTAL, 0);
+  leafs.data     = arena_push_array(arena, true, struct bsp_node *, leafs.capacity);
+  leafs.amount   = 0;
+  if (!leafs.data) {
+    log_errorlf("%s: ran out of memory", __func__);
     exit(1);
   }
-  bsp_get_sections(&root, &sections);
-  if (sections.capacity != sections.amount) {
+  bsp_get_leafs(&root, &leafs);
+  if (leafs.capacity != leafs.amount) {
     log_errorlf("%s: unreachable", __func__);
     exit(1);
   }
-  for (uint32_t i = 0; i < sections.amount; i++) indices[i] = i;
-  for (uint32_t i = 0; i < ROOMS_AMOUNT && sections.amount; i++) {
-    uint32_t idx = rand() % sections.amount;
-    struct v2u position = { sections.data[idx].position.x, sections.data[idx].position.y };
-    struct v2u size     = { rand_from_to(MIN_ROOM_SIZE, sections.data[idx].size.x), rand_from_to(MIN_ROOM_SIZE, sections.data[idx].size.y) };
-    for (uint32_t y = 0; y < size.y; y++) {
-      for (uint32_t x = 0; x < size.x; x++) {
-        map_set_point(position.x + x, position.y + y, true);
+  for (g_rooms_amount = 0; g_rooms_amount < ROOMS_CAP && leafs.amount; g_rooms_amount++) {
+    uint32_t idx = rand() % leafs.amount;
+    auto room = &g_rooms[g_rooms_amount];
+    room->size = g_rooms_amount == 0 ? V2US(MIN_ROOM_SIZE) : V2U(rand_from_to(MIN_ROOM_SIZE, leafs.data[idx]->section.size.x),
+                                                                 rand_from_to(MIN_ROOM_SIZE, leafs.data[idx]->section.size.y));
+    room->center = V2U(leafs.data[idx]->section.top_left.x + room->size.x / 2, leafs.data[idx]->section.top_left.y + room->size.y / 2);
+    for (uint32_t y = 0; y < room->size.y; y++) {
+      for (uint32_t x = 0; x < room->size.x; x++) {
+        map_set_point(room->center.x + x - room->size.x/2, room->center.y + y - room->size.y/2, true);
       }
     }
-    sections.data[idx] = sections.data[--sections.amount];
+    leafs.data[idx]->room = room;
+    leafs.data[idx] = leafs.data[--leafs.amount];
+  }
+  auto rooms_indices = arena_push_array(arena, true, uint32_t, g_rooms_amount);
+  if (!rooms_indices) {
+    log_errorlf("%s: ran out of memory", __func__);
+    exit(1);
+  }
+  auto rooms_indices_amount = g_rooms_amount;
+  for (uint32_t i = 0; i < rooms_indices_amount; i++) rooms_indices[i] = i;
+  for (uint32_t selected_room = 0; rooms_indices_amount > 1;) {
+    auto room = &g_rooms[rooms_indices[selected_room]];
+    rooms_indices[selected_room] = rooms_indices[--rooms_indices_amount];
+    float min_dist = INFINITY;
+    for (uint32_t i = 0; i < rooms_indices_amount; i++) {
+      auto room_to_check = &g_rooms[rooms_indices[i]];
+      auto dist = v2_dist(V2U_V2(room->center), V2U_V2(room_to_check->center));
+      if (dist < min_dist) {
+        selected_room = i;
+        min_dist = dist;
+      }
+    }
+    auto next_room = &g_rooms[rooms_indices[selected_room]];
+    carve_corridor(room, next_room);
+    if (randf() < 0.25f) {
+      auto extra_room = &g_rooms[rand() % g_rooms_amount];
+      if (extra_room != next_room && extra_room != room) {
+        carve_corridor(room, extra_room);
+      }
+    }
+    room->next = next_room;
   }
 }
 
@@ -186,15 +236,18 @@ dungeon_gen_update(struct arena *arena) {
   }
 }
 
+static struct v2
+to_game_coords(uint32_t x, uint32_t y) {
+  return V2((x - MAP_W * 0.5f) * UNIT_ONE_PIXEL,
+            (y - MAP_H * 0.5f) * UNIT_ONE_PIXEL);
+}
+
 void
 dungeon_gen_render(void) {
   for (uint32_t y = 0; y < MAP_H; y++) {
     for (uint32_t x = 0; x < MAP_W; x++) {
-      struct v2 position = {
-        (MAP_H * 0.5f - y) * UNIT_ONE_PIXEL,
-        (x - MAP_W * 0.5f) * UNIT_ONE_PIXEL,
-      };
-      renderer_request_point(position, map[y*MAP_W+x] ? WHITE : BLACK, 1.0f, 0.0f);
+      if (!map[y*MAP_W+x]) continue;
+      renderer_request_point(to_game_coords(x, y), WHITE, 1.0f, 0.0f);
     }
   }
 }

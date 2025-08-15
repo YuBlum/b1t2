@@ -46,6 +46,7 @@ void _renderer_request_animation(enum animation animation, uint32_t frame, struc
 
 void renderer_request_circle(struct v2 position, float radius, struct color color, float opacity);
 void renderer_request_rect(struct v2 position, struct v2 size, struct color color, float opacity, float depth);
+void renderer_request_line(struct v2 p0, struct v2 p1, float thickness, struct color color, float opacity, float depth);
 void renderer_request_point(struct v2 position, struct color color, float opacity, float depth);
 
 #endif/*__RENDERER_H__*/

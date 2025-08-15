@@ -50,10 +50,10 @@ game_loop(struct arena *arena) {
   (void)arena_clear(arena);
   if (window_is_key_down(KEY_EXIT)) window_close();
   global_update(dt);
-  entity_manager_update(dt);
-  entity_manager_render();
-  //dungeon_gen_update(arena);
-  //dungeon_gen_render();
+  //entity_manager_update(dt);
+  //entity_manager_render();
+  dungeon_gen_update(arena);
+  dungeon_gen_render();
   renderer_submit();
   //log_infolf("FPS: %g", 1.0f/dt);
   return window_frame_end();
@@ -62,7 +62,8 @@ game_loop(struct arena *arena) {
 int
 main(void) {
   struct arena *arena = arena_make(0, 0);
-  srand(time(0));
+  //srand(time(0));
+  srand(1755281900);
   if (!window_make()) return 1;
   if (!mixer_make()) {
     window_destroy();
