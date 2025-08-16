@@ -8,6 +8,7 @@
 #define MAP_OFFSET 6
 #define MAP_W (50+MAP_OFFSET*2)
 #define MAP_H (50+MAP_OFFSET*2)
+#define MIN_STEPS_TO_EXIT 50
 
 enum split_direction {
   SPLIT_HORIZONTAL = 0,
@@ -42,27 +43,22 @@ struct bsp_list {
   struct bsp_node *node;
 };
 
+enum tile_type {
+  TILE_EMPTY = 0,
+  TILE_FLOOR,
+  TILE_PLAYER,
+  TILE_EXIT
+};
+
 static struct room g_rooms[ROOMS_CAP];
 static uint32_t    g_rooms_amount;
-static bool g_map[MAP_W*MAP_H];
-struct v2u g_came_from[ROOMS_CAP][MAP_H][MAP_W];
+static enum tile_type g_map[MAP_H][MAP_W];
+uint32_t exit_room;
 
 static inline struct v2u room_get_top(uint32_t i)    { return V2U(g_rooms[i].center.x, g_rooms[i].center.y + g_rooms[i].size.y/2); }
 static inline struct v2u room_get_left(uint32_t i)   { return V2U(g_rooms[i].center.x - g_rooms[i].size.x/2, g_rooms[i].center.y); }
 static inline struct v2u room_get_bottom(uint32_t i) { return V2U(g_rooms[i].center.x, g_rooms[i].center.y - g_rooms[i].size.y/2); }
 static inline struct v2u room_get_right(uint32_t i)  { return V2U(g_rooms[i].center.x + g_rooms[i].size.x/2, g_rooms[i].center.y); }
-
-static void
-map_set_point(bool *map, uint32_t x, uint32_t y, bool value) {
-  if (x >= MAP_W || y >= MAP_H) return;
-  map[y*MAP_W+x] = value;
-}
-
-static bool
-map_get_point(bool *map, uint32_t x, uint32_t y) {
-  if (x >= MAP_W || y >= MAP_H) return false;
-  return map[y*MAP_W+x];
-}
 
 static uint32_t
 bsp_make_sections(struct arena *arena, struct bsp_node *root, enum split_direction direction, uint32_t current_sections_amount) {
@@ -149,21 +145,33 @@ bsp_get_sections(struct bsp_node *node, struct sections *sections) {
   sections->data[sections->amount++] = node->section;
 }
 
+
 static void
 carve_corridor(struct room *a, struct room *b) {
   uint32_t x0 = a->center.x, y0 = a->center.y,
            x1 = b->center.x, y1 = b->center.y;
+  uint32_t half_thickness = rand() % 3 + 1;
+  uint32_t x, y;
   if (rand() % 2) {
-    for (uint32_t x = MIN(x0,x1); x <= MAX(x0,x1); x++) map_set_point(g_map, x, y0, true);
-    for (uint32_t y = MIN(y0,y1); y <= MAX(y0,y1); y++) map_set_point(g_map, x1, y, true);
+    for (x = MIN(x0,x1); x <= MAX(x0,x1); x++) {
+      for (y = MIN(y0 - half_thickness, y0); y <= y0 + half_thickness; y++) g_map[y][x] = TILE_FLOOR;
+    }
+    for (y = MIN(y0,y1); y <= MAX(y0,y1); y++) {
+      for (x = MIN(x0 - half_thickness, x0); x <= x0 + half_thickness; x++) g_map[y][x] = TILE_FLOOR;
+    }
   } else {
-    for (uint32_t y = MIN(y0,y1); y <= MAX(y0,y1); y++) map_set_point(g_map, x0, y, true);
-    for (uint32_t x = MIN(x0,x1); x <= MAX(x0,x1); x++) map_set_point(g_map, x, y1, true);
+    for (y = MIN(y0,y1); y <= MAX(y0,y1); y++) {
+      for (x = MIN(x0 - half_thickness, x0); x <= x0 + half_thickness; x++) g_map[y][x] = TILE_FLOOR;
+    }
+    for (x = MIN(x0,x1); x <= MAX(x0,x1); x++) {
+      for (y = MIN(y0 - half_thickness, y0); y <= y0 + half_thickness; y++) g_map[y][x] = TILE_FLOOR;
+    }
   }
 }
 
 void
 dungeon_gen_init(struct arena *arena) {
+  arena_clear(arena);
   memset(g_map, 0, sizeof (g_map));
   struct bsp_node root = {
     .section = {
@@ -189,16 +197,15 @@ dungeon_gen_init(struct arena *arena) {
     auto room = &g_rooms[g_rooms_amount];
     room->size = g_rooms_amount == 0 ? V2US(MIN_ROOM_SIZE) : V2U(rand_from_to(MIN_ROOM_SIZE, sections.data[idx].size.x),
                                                                  rand_from_to(MIN_ROOM_SIZE, sections.data[idx].size.y));
-    room->center = V2U(sections.data[idx].top_left.x + room->size.x / 2, sections.data[idx].top_left.y + room->size.y / 2);
+    room->center = V2U(
+      sections.data[idx].top_left.x + room->size.x / 2 + rand() % (sections.data[idx].size.x - room->size.x),
+      sections.data[idx].top_left.y + room->size.y / 2 + rand() % (sections.data[idx].size.y - room->size.y)
+    );
     for (uint32_t y = 0; y < room->size.y; y++) {
       for (uint32_t x = 0; x < room->size.x; x++) {
-        map_set_point(g_map, room->center.x + x - room->size.x/2, room->center.y + y - room->size.y/2, true);
+        g_map[room->center.y + y - room->size.y/2][room->center.x + x - room->size.x/2] = TILE_FLOOR;
       }
     }
-    //uint32_t holes = room->size.x*room->size.y >= 50 ? rand_from_to(10, 20) : rand()%10;
-    //for (uint32_t i = 0; i < holes; i++) {
-    //  map_set_point(g_map, sections.data[idx].top_left.x + rand() % room->size.x, sections.data[idx].top_left.y + rand() % room->size.y, false);
-    //}
     sections.data[idx] = sections.data[--sections.amount];
   }
   auto rooms_indices = arena_push_array(arena, true, uint32_t, g_rooms_amount);
@@ -261,45 +268,59 @@ dungeon_gen_init(struct arena *arena) {
         case 2: nx = (x + 0); ny = (y + 1); break;
         case 3: nx = (x + 0); ny = (y - 1); break;
       }
-    } while (!map_get_point(g_map, nx, ny));
-    map_set_point(g_map, x, y, true);
+    } while (nx >= MAP_W || ny >= MAP_H || g_map[ny][nx] == TILE_EMPTY);
+    g_map[y][x] = TILE_FLOOR;
   }
 
-  bool map_visited[MAP_W*MAP_H];
+  bool map_visited[MAP_H][MAP_W];
   struct v2u queue[MAP_W*MAP_H];
+  struct v2u came_from[MAP_H][MAP_W];
   int32_t dirs_x[4] = { 1, -1, 0,  0 };
   int32_t dirs_y[4] = { 0,  0, 1, -1 };
   auto start = g_rooms[0].center;
+  uint32_t max_steps = 0;
+  uint32_t founded_rooms = 0;
+  exit_room = 0;
   for (uint32_t i = 1; i < g_rooms_amount; i++) {
     uint32_t queue_front = 0, queue_back = 0;
-    auto target = g_rooms[i].center;
     memset(map_visited, 0, sizeof (map_visited));
-    map_set_point(map_visited, start.x, start.y, true);
+    map_visited[start.y][start.x] = true;
     queue[queue_back++] = start;
     bool found_path = false;
     struct v2u cur;
     while (queue_front < queue_back) {
       cur = queue[queue_front++];
-      if (cur.x == target.x && cur.y == target.y) {
+      if (cur.x >= room_get_left(i).x && cur.x <= room_get_right(i).x && cur.y >= room_get_bottom(i).y && cur.y <= room_get_top(i).y) {
         found_path = true;
         break;
       }
       for (uint32_t j = 0; j < 4; j++) {
         auto p = V2U(cur.x + dirs_x[j], cur.y + dirs_y[j]);
-        if (p.x > MAP_W-1 || p.y > MAP_H-1 || map_get_point(map_visited, p.x, p.y) || !map_get_point(g_map, p.x, p.y)) continue;
-        map_set_point(map_visited, p.x, p.y, true);
-        g_came_from[i][p.y][p.x] = cur;
+        if (p.x >= MAP_W || p.y >= MAP_H || map_visited[p.y][p.x] || g_map[p.y][p.x] == TILE_EMPTY) continue;
+        map_visited[p.y][p.x] = true;
+        came_from[p.y][p.x] = cur;
         queue[queue_back++] = p;
       }
     }
     if (found_path) {
+      founded_rooms++;
       uint32_t steps = 1;
-      for (; cur.x != start.x || cur.y != start.y; cur = g_came_from[i][cur.y][cur.x]) steps++;
-      log_infolf("found with %u steps", steps);
-    } else {
-      log_infol("not found");
+      for (; cur.x != start.x || cur.y != start.y; cur = came_from[cur.y][cur.x]) steps++;
+      if (steps > max_steps) {
+        max_steps = steps;
+        exit_room = i;
+      }
     }
   }
+  if (max_steps < MIN_STEPS_TO_EXIT || founded_rooms < g_rooms_amount-1) {
+    dungeon_gen_init(arena);
+    return;
+  }
+  g_map[rand_from_to(room_get_bottom(exit_room).y, room_get_top(exit_room).y)]
+       [rand_from_to(room_get_left(exit_room).x, room_get_right(exit_room).x)] = TILE_EXIT;
+  g_map[rand_from_to(room_get_bottom(0).y, room_get_top(0).y)]
+       [rand_from_to(room_get_left(0).x, room_get_right(0).x)] = TILE_PLAYER;
+  log_infolf("exit room = %u, with %u steps", exit_room, max_steps);
 }
 
 
@@ -320,15 +341,14 @@ void
 dungeon_gen_render(void) {
   for (uint32_t y = 0; y < MAP_H; y++) {
     for (uint32_t x = 0; x < MAP_W; x++) {
-      renderer_request_point(to_game_coords(x, y), map_get_point(g_map, x, y) ? WHITE : RED, 1.0f, 0.0f);
+      struct color c;
+      switch (g_map[y][x]) {
+        case TILE_FLOOR:  c = RGB(0.2f, 0.2f, 0.2f); break;
+        case TILE_EMPTY:  c = BLACK; break;
+        case TILE_EXIT:   c = BLUE; break;
+        case TILE_PLAYER: c = GREEN; break;
+      }
+      renderer_request_point(to_game_coords(x, y), c, 1.0f, 0.0f);
     }
-  }
-  for (uint32_t i = 1; i < g_rooms_amount; i++) {
-    for (struct v2u cur = g_rooms[i].center; cur.x != g_rooms[0].center.x || cur.y != g_rooms[0].center.y; cur = g_came_from[i][cur.y][cur.x]) {
-      renderer_request_point(to_game_coords(cur.x, cur.y), BLACK, 0.2f, 0.0f);
-    }
-  }
-  for (uint32_t i = 0; i < g_rooms_amount; i++) {
-    renderer_request_point(to_game_coords(g_rooms[i].center.x, g_rooms[i].center.y), i == 0 ? BLUE : RGB(0.0f, 0.8f, 0.0f), 1.0f, 0.0f);
   }
 }
