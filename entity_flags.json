@@ -19,7 +19,8 @@
     "HOLDING_GUN",
     "NOT_HOLDING_GUN",
     "SOLID",
-    "COLLIDABLE"
+    "COLLIDABLE",
+    "CAMERA_FOLLOW"
   ]
 }
 

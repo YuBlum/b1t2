@@ -36,7 +36,8 @@ test_entities(void) {
   player->position                  = V2S(0.0f);
   player->speed                     = 6.0f;
   player->target                    = entity_get_handle(flower);
-  player->size                      = V2(1.0f, 1.0f);
+  player->size                      = V2(0.7f, 0.5f);
+  player->origin                    = V2(0.0f, -0.25f);
   player->interaction_radius        = 1.5f;
   player->state_animation[STM_IDLE] = ANIM_PLAYER_IDLE;
   player->state_animation[STM_WALK] = ANIM_PLAYER_WALK;
@@ -69,7 +70,7 @@ game_loop(struct arena *arena) {
   entity_manager_update(dt);
   entity_manager_render();
   //dungeon_gen_update(arena);
-  //dungeon_gen_render();
+  dungeon_gen_render();
   renderer_submit();
   //log_infolf("FPS: %g", 1.0f/dt);
   return window_frame_end();
@@ -97,7 +98,7 @@ main(void) {
   }
   entity_manager_init();
   global_init();
-  test_entities();
+  //test_entities();
   dungeon_gen_init(arena);
   window_run(arena);
   mixer_destroy();

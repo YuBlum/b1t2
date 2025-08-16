@@ -20,10 +20,6 @@ ON_UPDATE_SYSTEM(keyboard_control, KEYBOARD_CONTROLLED) {
   ));
 }
 
-ON_UPDATE_SYSTEM(update_velocity, MOVABLE) {
-  self->velocity = v2_muls(self->direction, self->speed * dt);
-}
-
 ON_UPDATE_SYSTEM(collide_with_solids, COLLIDABLE) {
   (void)dt;
   auto cached = entity_manager_get_cached();
@@ -34,21 +30,26 @@ ON_UPDATE_SYSTEM(collide_with_solids, COLLIDABLE) {
     break;
   }
   if (!other) return;
-  auto x_test = V2(self->position.x + self->velocity.x, self->position.y);
-  auto y_test = V2(self->position.x, self->position.y + self->velocity.y);
+  auto x_test = V2(self->position.x + self->direction.x * self->speed * dt, self->position.y);
+  auto y_test = V2(self->position.x, self->position.y + self->direction.y * self->speed * dt);
   if (check_rect_rect(x_test, self->size, other->position, other->size)) {
-    self->velocity.x = 0;
+    self->direction.x = 0;
     self->position.x = resolve_rect_rect_axis(self->position.x, self->size.x, other->position.x, other->size.x);
   }
   if (check_rect_rect(y_test, self->size, other->position, other->size)) {
-    self->velocity.y = 0;
+    self->direction.y = 0;
     self->position.y = resolve_rect_rect_axis(self->position.y, self->size.y, other->position.y, other->size.y);
   }
 }
 
 ON_UPDATE_SYSTEM(move, MOVABLE) {
   (void)dt;
-  self->position = v2_add(self->position, self->velocity);
+  self->position = v2_add(self->position, v2_muls(self->direction, self->speed * dt));
+}
+
+ON_UPDATE_SYSTEM(camera_follow, CAMERA_FOLLOW) {
+  (void)dt;
+  renderer_set_offset(v2_lerp(renderer_get_offset(), self->position, 0.1f));
 }
 
 ON_UPDATE_SYSTEM(depth_by_y, DEPTH_BY_Y) {

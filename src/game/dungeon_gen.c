@@ -1,5 +1,6 @@
 #include "engine/renderer.h"
 #include "engine/window.h"
+#include "game/entity.h"
 #include <string.h>
 
 #define MIN_SECTION_SIZE 10
@@ -314,10 +315,55 @@ dungeon_gen_init(struct arena *arena) {
       }
     }
   } while (max_steps < MIN_STEPS_TO_EXIT || founded_rooms < g_rooms_amount-1);
-  g_map[rand_from_to(room_get_bottom(g_exit_room).y, room_get_top(g_exit_room).y)]
-       [rand_from_to(room_get_left(g_exit_room).x, room_get_right(g_exit_room).x)] = TILE_EXIT;
-  g_map[rand_from_to(room_get_bottom(0).y, room_get_top(0).y)]
-       [rand_from_to(room_get_left(0).x, room_get_right(0).x)] = TILE_PLAYER;
+  struct v2u exit_pos = {
+    rand_from_to(room_get_left(g_exit_room).x, room_get_right(g_exit_room).x),
+    rand_from_to(room_get_bottom(g_exit_room).y, room_get_top(g_exit_room).y)
+  };
+  struct v2 player_pos = {
+    rand_from_to(room_get_left(0).x, room_get_right(0).x),
+    rand_from_to(room_get_bottom(0).y, room_get_top(0).y)
+  };
+  g_map[exit_pos.y][exit_pos.x] = TILE_EXIT;
+  g_map[(int)player_pos.y][(int)player_pos.x] = TILE_PLAYER;
+
+  auto flower = entity_make(RENDER_COLLIDER|RENDER_SPRITE|FOLLOW);
+  auto gun    = entity_make(NO_FLAGS);
+  auto player = entity_make(
+      RENDER_COLLIDER
+    | RENDER_ANIMATION
+    | STATE_MACHINE
+    | LOOPABLE
+    | MOVABLE
+    | KEYBOARD_CONTROLLED
+    | HOLDING
+    | DEPTH_BY_Y
+    | HAS_GUN
+    | COLLIDABLE
+    | CAMERA_FOLLOW
+  );
+
+  renderer_set_offset(player_pos);
+  player->position                  = player_pos;
+  player->speed                     = 6.0f;
+  player->target                    = entity_get_handle(flower);
+  player->size                      = V2(0.7f, 0.5f);
+  player->origin                    = V2(0.0f, -0.25f);
+  player->interaction_radius        = 1.5f;
+  player->state_animation[STM_IDLE] = ANIM_PLAYER_IDLE;
+  player->state_animation[STM_WALK] = ANIM_PLAYER_WALK;
+  player->scale                     = V2S(1.0f);
+  player->gun                       = entity_get_handle(gun);
+
+  flower->position  = player->position;
+  flower->sprite    = SPR_FLOWER;
+  flower->size      = V2(0.5f, 0.5f);
+  flower->speed     = 15.0f;
+  flower->scale     = V2S(1.0f);
+  flower->origin    = V2(-0.1f, -0.5f);
+
+  gun->sprite = SPR_GUN;
+  gun->scale  = V2S(1.0f);
+
   log_infolf("exit room = %u, with %u steps", g_exit_room, max_steps);
 }
 
@@ -337,6 +383,8 @@ to_game_coords(uint32_t x, uint32_t y) {
 
 void
 dungeon_gen_render(void) {
+  (void)to_game_coords;
+  /*
   for (uint32_t y = 0; y < MAP_H; y++) {
     for (uint32_t x = 0; x < MAP_W; x++) {
       struct color c;
@@ -347,6 +395,13 @@ dungeon_gen_render(void) {
         case TILE_PLAYER: c = GREEN; break;
       }
       renderer_request_point(to_game_coords(x, y), c, 1.0f, 0.0f);
+    }
+  }
+  */
+  for (uint32_t y = 0; y < MAP_H; y++) {
+    for (uint32_t x = 0; x < MAP_W; x++) {
+      if (g_map[y][x] == TILE_EMPTY) continue;
+      renderer_request_rect(V2(x, y), V2S(1.0f), g_map[y][x] == TILE_EXIT ? BLUE : RGB(0.2f, 0.2f, 0.2f), 1.0f, INFINITY);
     }
   }
 }

@@ -23,6 +23,7 @@ enum entity_flag {
   NOT_HOLDING_GUN = 1 << 17,
   SOLID = 1 << 18,
   COLLIDABLE = 1 << 19,
+  CAMERA_FOLLOW = 1 << 20,
 };
 
 #endif/*__ENTITY_FLAGS_H__*/

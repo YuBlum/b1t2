@@ -5,9 +5,9 @@
 
 void follow_cursor(struct entity *self, float dt);
 void keyboard_control(struct entity *self, float dt);
-void update_velocity(struct entity *self, float dt);
 void collide_with_solids(struct entity *self, float dt);
 void move(struct entity *self, float dt);
+void camera_follow(struct entity *self, float dt);
 void depth_by_y(struct entity *self, float dt);
 void move_held(struct entity *self, float dt);
 void release_held(struct entity *self, float dt);
