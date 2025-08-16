@@ -16,7 +16,7 @@ static inline float signf(float x) { return (x > 0.0f) - (x < 0.0f); }
 
 #define randf() ((float)rand()/(float)RAND_MAX)
 #define randf_from_to(X, Y) (randf() * ((Y) - (X)) + (X))
-#define rand_from_to(X, Y) ((uint32_t)randf_from_to(X, Y))
+#define rand_from_to(X, Y) (rand() % ((Y) - (X)) + (X))
 
 struct v2 { float x, y; };
 #define V2(x, y) ((struct v2) {x, y})
@@ -58,5 +58,7 @@ static inline struct v2u v2u_muls(struct v2u v, uint32_t s) { return V2U(v.x*s, 
 static inline struct v2u v2u_divs(struct v2u v, uint32_t s) { return V2U(v.x/s, v.y/s); }
 
 static inline struct v2u v2u_lerp(struct v2u a, struct v2u b, float t) { return V2U(lerp(a.x, b.x, t), lerp(a.y, b.y, t)); }
+static inline float v2u_mag(struct v2u v) { return sqrt(v.x*v.x + v.y*v.y); }
+static inline float v2u_dist(struct v2u v0, struct v2u v1) { return v2u_mag(v2u_sub(v1, v0)); }
 
 #endif/*__YMATH_H__*/
