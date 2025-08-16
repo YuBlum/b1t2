@@ -114,7 +114,7 @@ window_main_loop(struct arena *arena) {
 void
 window_run(struct arena *arena) {
 #if WASM
-  emscripten_set_main_loop((em_str_callback_func)window_main_loop, arena, 0, true);
+  emscripten_set_main_loop_arg((em_arg_callback_func)window_main_loop, arena, 0, true);
 #endif
 #ifndef WASM
   while (game_loop(arena));

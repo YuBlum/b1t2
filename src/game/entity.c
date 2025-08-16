@@ -98,6 +98,11 @@ entity_get_handle(struct entity *entity) {
   return handle;
 }
 
+struct entities
+entity_manager_get_cached(void) {
+  return (struct entities) { .data = g_entities.cached, .amount = g_entities.cached_amount };
+}
+
 void
 entity_manager_init(void) {
   g_entities.free_list_amount = 0;

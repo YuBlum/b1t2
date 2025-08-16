@@ -3,7 +3,7 @@
 
 #include "engine/core.h"
 #include "engine/math.h"
-#include "engine/sprites.h"
+#include "engine/renderer.h"
 
 enum entity_state {
   STM_IDLE = 0,
@@ -26,8 +26,10 @@ struct entity_handle {
 struct entity {
   enum entity_flag flags;
   enum entity_flag next_flags;
+  struct color color;
   struct v2 target_position;
   struct v2 position;
+  struct v2 velocity;
   struct v2 direction;
   struct v2 size;
   struct v2 scale;
@@ -47,6 +49,11 @@ struct entity {
   enum entity_state state;
 };
 
+struct entities {
+  struct entity **data;
+  uint32_t amount;
+};
+
 static inline void
 entity_change_state(struct entity *entity, enum entity_state state) {
   entity->state = state;
@@ -62,6 +69,7 @@ struct entity *entity_make(enum entity_flag flags);
 void entity_destroy(struct entity *entity);
 struct entity *entity_get_data(struct entity_handle handle);
 struct entity_handle entity_get_handle(struct entity *entity);
+struct entities entity_manager_get_cached(void);
 void entity_manager_init(void);
 void entity_manager_update(float dt);
 void entity_manager_render(void);

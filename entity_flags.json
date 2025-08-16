@@ -17,7 +17,9 @@
     "DEPTH_BY_Y",
     "HAS_GUN",
     "HOLDING_GUN",
-    "NOT_HOLDING_GUN"
+    "NOT_HOLDING_GUN",
+    "SOLID",
+    "COLLIDABLE"
   ]
 }
 

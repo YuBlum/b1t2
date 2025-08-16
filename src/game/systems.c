@@ -20,9 +20,35 @@ ON_UPDATE_SYSTEM(keyboard_control, KEYBOARD_CONTROLLED) {
   ));
 }
 
+ON_UPDATE_SYSTEM(update_velocity, MOVABLE) {
+  self->velocity = v2_muls(self->direction, self->speed * dt);
+}
+
+ON_UPDATE_SYSTEM(collide_with_solids, COLLIDABLE) {
+  (void)dt;
+  auto cached = entity_manager_get_cached();
+  struct entity *other = 0;
+  for (uint32_t i = 0; i < cached.amount; i++) {
+    if (!entity_get_flags(cached.data[i], SOLID)) continue;
+    other = cached.data[i];
+    break;
+  }
+  if (!other) return;
+  auto x_test = V2(self->position.x + self->velocity.x, self->position.y);
+  auto y_test = V2(self->position.x, self->position.y + self->velocity.y);
+  if (check_rect_rect(x_test, self->size, other->position, other->size)) {
+    self->velocity.x = 0;
+    self->position.x = resolve_rect_rect_axis(self->position.x, self->size.x, other->position.x, other->size.x);
+  }
+  if (check_rect_rect(y_test, self->size, other->position, other->size)) {
+    self->velocity.y = 0;
+    self->position.y = resolve_rect_rect_axis(self->position.y, self->size.y, other->position.y, other->size.y);
+  }
+}
+
 ON_UPDATE_SYSTEM(move, MOVABLE) {
   (void)dt;
-  self->position = v2_add(self->position, v2_muls(self->direction, self->speed * dt));
+  self->position = v2_add(self->position, self->velocity);
 }
 
 ON_UPDATE_SYSTEM(depth_by_y, DEPTH_BY_Y) {
@@ -150,6 +176,7 @@ ON_UPDATE_SYSTEM(update_gun, HOLDING_GUN) {
     bullet->direction = gun->direction;
     bullet->speed     = 40.0f;
     bullet->size      = V2S(2*UNIT_ONE_PIXEL);
+    bullet->color     = WHITE;
   } else if (window_is_button_down(BTN_LEFT)) {
     gun->position = v2_sub(gun->position, v2_muls(gun->direction, 0.3f));
   }
@@ -182,7 +209,7 @@ ON_RENDER_SYSTEM(render_rect, RENDER_RECT) {
   renderer_request_rect(
     self->position,
     self->size,
-    WHITE,
+    self->color,
     1.0f,
     self->depth
   );

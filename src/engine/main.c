@@ -12,9 +12,21 @@
 void
 test_entities(void) {
   auto cursor = entity_make(RENDER_ANIMATION|STATE_MACHINE|FOLLOW_CURSOR);
-  auto player = entity_make(RENDER_ANIMATION|STATE_MACHINE|LOOPABLE|MOVABLE|KEYBOARD_CONTROLLED|HOLDING|DEPTH_BY_Y|HAS_GUN);
-  auto flower = entity_make(RENDER_COLLIDER|RENDER_SPRITE|FOLLOW|DEPTH_BY_Y);
+  auto flower = entity_make(RENDER_COLLIDER|RENDER_SPRITE|FOLLOW);
   auto gun    = entity_make(NO_FLAGS);
+  auto solid  = entity_make(RENDER_RECT|SOLID|DEPTH_BY_Y);
+  auto player = entity_make(
+      RENDER_COLLIDER
+    | RENDER_ANIMATION
+    | STATE_MACHINE
+    | LOOPABLE
+    | MOVABLE
+    | KEYBOARD_CONTROLLED
+    | HOLDING
+    | DEPTH_BY_Y
+    | HAS_GUN
+    | COLLIDABLE
+  );
 
   cursor->state_animation[STM_IDLE]    = ANIM_AIM_IDLE;
   cursor->state_animation[STM_PRESSED] = ANIM_AIM_PRESSED;
@@ -40,6 +52,10 @@ test_entities(void) {
 
   gun->sprite = SPR_GUN;
   gun->scale  = V2S(1.0f);
+
+  solid->position = V2(-2.0f, 1.0f);
+  solid->size     = V2S(1.0f);
+  solid->color    = GREEN;
 }
 
 static float dt;
@@ -50,10 +66,10 @@ game_loop(struct arena *arena) {
   (void)arena_clear(arena);
   if (window_is_key_down(KEY_EXIT)) window_close();
   global_update(dt);
-  //entity_manager_update(dt);
-  //entity_manager_render();
-  dungeon_gen_update(arena);
-  dungeon_gen_render();
+  entity_manager_update(dt);
+  entity_manager_render();
+  //dungeon_gen_update(arena);
+  //dungeon_gen_render();
   renderer_submit();
   //log_infolf("FPS: %g", 1.0f/dt);
   return window_frame_end();

@@ -4,7 +4,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 NAME="game"
-FLAGS="-Wall -Wextra -Wno-override-init -Wno-override-init-side-effects -Werror -Wpedantic -std=c23"
+FLAGS="-Wall -Wextra -Wno-override-init -Werror -Wpedantic -std=c23"
 DEF="-DDEV"
 SRCS=$(find ./src/ -type f -name "*.c" ! -path "./src/engine/x64win.c" ! -path "./src/engine/x64lin.c" ! -path "./src/engine/wasm.c" | tr '\n' ' ')
 LIBS="\
@@ -22,6 +22,7 @@ RUN="y"
 if [ "$1" = "win" ]; then
   DEF+=" -DWINDOWS"
   SRCS+=" ./src/engine/x64win.c"
+  FLAGS+=" -Wno-override-init-side-effects"
   LIBS+="\
 vendor/glad/win-glad.o \
 vendor/miniaudio/win-miniaudio.o \
@@ -37,6 +38,7 @@ vendor/miniaudio/win-miniaudio.o \
 elif [ "$1" = "lin" ]; then
   DEF+=" -DLINUX"
   SRCS+=" ./src/engine/x64lin.c"
+  FLAGS+=" -Wno-override-init-side-effects"
   LIBS+="\
 vendor/glad/lin-glad.o \
 vendor/miniaudio/lin-miniaudio.o \

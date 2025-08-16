@@ -14,6 +14,14 @@ entity_manager_update(float dt) {
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
     auto e = g_entities.cached[i];
+    if (entity_get_flags(e, MOVABLE)) update_velocity(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
+    if (entity_get_flags(e, COLLIDABLE)) collide_with_solids(e, dt);
+  }
+  for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
+    auto e = g_entities.cached[i];
     if (entity_get_flags(e, MOVABLE)) move(e, dt);
   }
   for (uint32_t i = 0; i < g_entities.cached_amount; i++) {
