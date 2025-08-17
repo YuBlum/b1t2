@@ -49,9 +49,8 @@ button_callback(GLFWwindow* _window, int button, int action, int _mods) {
 static void
 cursor_position_callback(GLFWwindow* _window, double xpos, double ypos) {
   (void)_window;
-  auto offset = renderer_get_offset();
-  g_window.cursor.x = xpos/(GAME_S*UNIT_PER_PIXEL)-GAME_W*0.5f + offset.x;
-  g_window.cursor.y = GAME_H*0.5f-ypos/(GAME_S*UNIT_PER_PIXEL) + offset.y;
+  g_window.cursor.x = xpos/(GAME_S*UNIT_PER_PIXEL)-GAME_W*0.5f;
+  g_window.cursor.y = GAME_H*0.5f-ypos/(GAME_S*UNIT_PER_PIXEL);
 }
 
 bool
@@ -229,6 +228,6 @@ window_is_button_release(enum button btn) {
 
 struct v2
 window_get_cursor_position(void) {
-  return g_window.cursor;
+  return v2_add(g_window.cursor, renderer_get_offset());
 }
 

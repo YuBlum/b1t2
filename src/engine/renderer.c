@@ -313,7 +313,11 @@ renderer_request_sprite_internal(enum sprite sprite, struct v2 position, struct 
   vertices[1].position = position;
   vertices[2].position = position;
   vertices[3].position = position;
-  /* the texcoords needs to be offseted by half a texel, this is to prevent random sprite leakage into the current sprite */
+  /* Note for the future: the texcoords needs to be offseted by half a texel, this is to prevent random sprite leakage into the current sprite.
+   *                      Its also possible to add some padding into the sprite to also prevent this problem, the padding isn't just some blank
+   *                      padding but a copy of the edges of the sprite. usually 2 pixels of padding is preferable. the padding is also required
+   *                      if using mipmaps or linear filtering, that's not the case here though so this is fine.
+   */
   vertices[0].texcoord = v2_add(tpos, V2(       TEXEL_HALF_W, tsiz.y-TEXEL_HALF_H));
   vertices[1].texcoord = v2_add(tpos, V2(tsiz.x-TEXEL_HALF_W, tsiz.y-TEXEL_HALF_H));
   vertices[2].texcoord = v2_add(tpos, V2(tsiz.x-TEXEL_HALF_W,        TEXEL_HALF_H));
