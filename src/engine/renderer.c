@@ -196,6 +196,8 @@ renderer_make(void) {
   glBindTexture(GL_TEXTURE_2D, g_renderer.texture_atlas);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ATLAS_WIDTH, ATLAS_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, g_atlas_data);
   log_infol("loaded texture atlas");
   uint32_t vao, vbo, ibo;
@@ -289,8 +291,11 @@ renderer_animation_get_data(enum animation animation) {
   return &g_atlas_animations[animation];
 }
 
-void
-_renderer_request_sprite(enum sprite sprite, struct v2 position, struct renderer_params p) {
+#define TEXEL_HALF_W (ATLAS_PIXEL_W*0.5f)
+#define TEXEL_HALF_H (ATLAS_PIXEL_H*0.5f)
+
+static void
+renderer_request_sprite_internal(enum sprite sprite, struct v2 position, struct v2 hsiz, struct v2 tpos, struct v2 tsiz, struct renderer_params p) {
 #if DEV
   if (g_renderer.quads_amount + 1 >= QUAD_CAPACITY) {
     log_warnlf("%s: trying to request to much quads for rendering. increase QUAD_CAPACITY", __func__);
@@ -302,19 +307,17 @@ _renderer_request_sprite(enum sprite sprite, struct v2 position, struct renderer
   }
 #endif
   static_assert(sizeof (struct vertex) == sizeof (float) * 12);
-  struct v2 hsiz = g_atlas_sprite_half_sizes[sprite],
-            tpos = g_atlas_sprite_positions[sprite],
-            tsiz = g_atlas_sprite_sizes[sprite],
-            cos_sin = { cosf(p.angle), sinf(p.angle) };
+  struct v2 cos_sin = { cosf(p.angle), sinf(p.angle) };
   struct vertex *vertices = g_renderer.vertices[g_renderer.quads_amount].v;
   vertices[0].position = position;
   vertices[1].position = position;
   vertices[2].position = position;
   vertices[3].position = position;
-  vertices[0].texcoord = v2_add(tpos, V2(0.0f  , tsiz.y));
-  vertices[1].texcoord = v2_add(tpos, V2(tsiz.x, tsiz.y));
-  vertices[2].texcoord = v2_add(tpos, V2(tsiz.x, 0.0f  ));
-  vertices[3].texcoord = v2_add(tpos, V2(0.0f  , 0.0f  ));
+  /* the texcoords needs to be offseted by half a texel, this is to prevent random sprite leakage into the current sprite */
+  vertices[0].texcoord = v2_add(tpos, V2(       TEXEL_HALF_W, tsiz.y-TEXEL_HALF_H));
+  vertices[1].texcoord = v2_add(tpos, V2(tsiz.x-TEXEL_HALF_W, tsiz.y-TEXEL_HALF_H));
+  vertices[2].texcoord = v2_add(tpos, V2(tsiz.x-TEXEL_HALF_W,        TEXEL_HALF_H));
+  vertices[3].texcoord = v2_add(tpos, V2(       TEXEL_HALF_W,        TEXEL_HALF_H));
   vertices[0].origin = v2_mul(v2_sub(V2(-hsiz.x, -hsiz.y), p.origin), p.scale);
   vertices[1].origin = v2_mul(v2_sub(V2(+hsiz.x, -hsiz.y), p.origin), p.scale);
   vertices[2].origin = v2_mul(v2_sub(V2(+hsiz.x, +hsiz.y), p.origin), p.scale);
@@ -338,49 +341,18 @@ _renderer_request_sprite(enum sprite sprite, struct v2 position, struct renderer
 
 void
 _renderer_request_sprite_slice(enum sprite sprite, struct v2 position, struct v2 top_left, struct v2 size, struct renderer_params p) {
-#if DEV
-  if (g_renderer.quads_amount + 1 >= QUAD_CAPACITY) {
-    log_warnlf("%s: trying to request to much quads for rendering. increase QUAD_CAPACITY", __func__);
-    return;
-  }
-  if (sprite >= SPRITES_AMOUNT) {
-    log_warnlf("%s: sprite with number '%d' doesn't exists", __func__, sprite);
-    return;
-  }
-#endif
-  static_assert(sizeof (struct vertex) == sizeof (float) * 12);
   struct v2 hsiz = V2(size.x * ATLAS_WIDTH * 0.5f * UNIT_ONE_PIXEL, size.y * ATLAS_HEIGHT * 0.5f * UNIT_ONE_PIXEL),
             tpos = v2_add(g_atlas_sprite_positions[sprite], top_left),
-            tsiz = size,
-            cos_sin = { cosf(p.angle), sinf(p.angle) };
-  struct vertex *vertices = g_renderer.vertices[g_renderer.quads_amount].v;
-  vertices[0].position = position;
-  vertices[1].position = position;
-  vertices[2].position = position;
-  vertices[3].position = position;
-  vertices[0].texcoord = v2_add(tpos, V2(0.0f  , tsiz.y));
-  vertices[1].texcoord = v2_add(tpos, V2(tsiz.x, tsiz.y));
-  vertices[2].texcoord = v2_add(tpos, V2(tsiz.x, 0.0f  ));
-  vertices[3].texcoord = v2_add(tpos, V2(0.0f  , 0.0f  ));
-  vertices[0].origin = v2_mul(v2_sub(V2(-hsiz.x, -hsiz.y), p.origin), p.scale);
-  vertices[1].origin = v2_mul(v2_sub(V2(+hsiz.x, -hsiz.y), p.origin), p.scale);
-  vertices[2].origin = v2_mul(v2_sub(V2(+hsiz.x, +hsiz.y), p.origin), p.scale);
-  vertices[3].origin = v2_mul(v2_sub(V2(-hsiz.x, +hsiz.y), p.origin), p.scale);
-  vertices[0].angle = cos_sin;
-  vertices[1].angle = cos_sin;
-  vertices[2].angle = cos_sin;
-  vertices[3].angle = cos_sin;
-  vertices[0].color = p.color;
-  vertices[1].color = p.color;
-  vertices[2].color = p.color;
-  vertices[3].color = p.color;
-  vertices[0].opacity = p.opacity;
-  vertices[1].opacity = p.opacity;
-  vertices[2].opacity = p.opacity;
-  vertices[3].opacity = p.opacity;
-  g_renderer.indices_to_sort[g_renderer.quads_amount].depth = p.depth;
-  g_renderer.indices_to_sort[g_renderer.quads_amount].start = g_renderer.quads_amount * 4;
-  g_renderer.quads_amount++;
+            tsiz = size;
+  renderer_request_sprite_internal(sprite, position, hsiz, tpos, tsiz, p);
+}
+
+void
+_renderer_request_sprite(enum sprite sprite, struct v2 position, struct renderer_params p) {
+  struct v2 hsiz = g_atlas_sprite_half_sizes[sprite],
+            tpos = g_atlas_sprite_positions[sprite],
+            tsiz = g_atlas_sprite_sizes[sprite];
+  renderer_request_sprite_internal(sprite, position, hsiz, tpos, tsiz, p);
 }
 
 void

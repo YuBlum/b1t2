@@ -60,9 +60,15 @@ ON_UPDATE_SYSTEM(move, MOVABLE) {
   self->position = self->next_position;
 }
 
+#define CAM_EPSILON 0.01f
+#define CAM_MOVE_BY_FACTOR 0.99f
+
 ON_UPDATE_SYSTEM(camera_follow, CAMERA_FOLLOW) {
-  (void)dt;
-  renderer_set_offset(v2_lerp(renderer_get_offset(), self->position, 0.1f));
+  auto percent  = 1.0f - powf(1.0f - CAM_MOVE_BY_FACTOR, dt);
+  auto next_pos = v2_lerp(renderer_get_offset(), self->position, percent);
+  if (fabsf(next_pos.x - self->position.x) <= CAM_EPSILON) next_pos.x = self->position.x;
+  if (fabsf(next_pos.y - self->position.y) <= CAM_EPSILON) next_pos.y = self->position.y;
+  renderer_set_offset(next_pos);
 }
 
 ON_UPDATE_SYSTEM(depth_by_y, DEPTH_BY_Y) {
