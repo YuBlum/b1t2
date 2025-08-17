@@ -3,6 +3,7 @@
 #include "engine/renderer.h"
 #include "engine/window.h"
 #include "engine/collision.h"
+#include "game/dungeon_gen.h"
 
 #define ON_UPDATE_SYSTEM(system, ...) void system(struct entity *self, float dt)
 #define ON_RENDER_SYSTEM(system, ...) void system(struct entity *self)
@@ -20,31 +21,43 @@ ON_UPDATE_SYSTEM(keyboard_control, KEYBOARD_CONTROLLED) {
   ));
 }
 
+ON_UPDATE_SYSTEM(get_next_position, MOVABLE) {
+  self->next_position = v2_add(self->position, v2_muls(self->direction, self->speed * dt));
+}
+
 ON_UPDATE_SYSTEM(collide_with_solids, COLLIDABLE) {
   (void)dt;
-  auto cached = entity_manager_get_cached();
-  struct entity *other = 0;
-  for (uint32_t i = 0; i < cached.amount; i++) {
-    if (!entity_get_flags(cached.data[i], SOLID)) continue;
-    other = cached.data[i];
-    break;
+  auto x_test = V2(self->next_position.x, self->position.y);
+  auto y_test = V2(self->position.x, self->next_position.y);
+  float tile_position_x, tile_position_y;
+  bool tile_found_x = false, tile_found_y = false;
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      struct v2 tile_position = V2(roundf(self->position.x) + i, roundf(self->position.y) + j);
+      if (!dungeon_gen_is_tile_empty(tile_position)) continue;
+      if (check_rect_rect(x_test, self->size, tile_position, V2S(1.0f))) {
+        tile_found_x = true;
+        tile_position_x = tile_position.x;
+      }
+      if (check_rect_rect(y_test, self->size, tile_position, V2S(1.0f))) {
+        tile_found_y = true;
+        tile_position_y = tile_position.y;
+      }
+    }
   }
-  if (!other) return;
-  auto x_test = V2(self->position.x + self->direction.x * self->speed * dt, self->position.y);
-  auto y_test = V2(self->position.x, self->position.y + self->direction.y * self->speed * dt);
-  if (check_rect_rect(x_test, self->size, other->position, other->size)) {
-    self->direction.x = 0;
-    self->position.x = resolve_rect_rect_axis(self->position.x, self->size.x, other->position.x, other->size.x);
+  if (tile_found_x) {
+    self->next_position.x = resolve_rect_rect_axis(self->position.x, self->size.x, tile_position_x, 1.0f);
+    self->direction.x = 0.0f;
   }
-  if (check_rect_rect(y_test, self->size, other->position, other->size)) {
-    self->direction.y = 0;
-    self->position.y = resolve_rect_rect_axis(self->position.y, self->size.y, other->position.y, other->size.y);
+  if (tile_found_y) {
+    self->next_position.y = resolve_rect_rect_axis(self->position.y, self->size.y, tile_position_y, 1.0f);
+    self->direction.y = 0.0f;
   }
 }
 
 ON_UPDATE_SYSTEM(move, MOVABLE) {
   (void)dt;
-  self->position = v2_add(self->position, v2_muls(self->direction, self->speed * dt));
+  self->position = self->next_position;
 }
 
 ON_UPDATE_SYSTEM(camera_follow, CAMERA_FOLLOW) {

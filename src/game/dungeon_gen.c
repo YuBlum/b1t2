@@ -1,14 +1,12 @@
 #include "engine/renderer.h"
 #include "engine/window.h"
 #include "game/entity.h"
+#include "game/dungeon_gen.h"
 #include <string.h>
 
 #define MIN_SECTION_SIZE 10
 #define MIN_ROOM_SIZE 6
 #define ROOMS_CAP 10
-#define MAP_OFFSET 6
-#define MAP_W (50+MAP_OFFSET*2)
-#define MAP_H (50+MAP_OFFSET*2)
 #define MIN_STEPS_TO_EXIT 50
 
 enum split_direction {
@@ -379,6 +377,12 @@ static struct v2
 to_game_coords(uint32_t x, uint32_t y) {
   return V2((x - MAP_W * 0.5f) * UNIT_ONE_PIXEL,
             (y - MAP_H * 0.5f) * UNIT_ONE_PIXEL);
+}
+
+bool
+dungeon_gen_is_tile_empty(struct v2 position) {
+  if (position.x < 0.0f || position.y < 0.0f || position.x >= MAP_W || position.y >= MAP_H) return true;
+  return g_map[(int)position.y][(int)position.x] == TILE_EMPTY;
 }
 
 void

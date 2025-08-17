@@ -11,7 +11,6 @@
 
 void
 test_entities(void) {
-  auto cursor = entity_make(RENDER_ANIMATION|STATE_MACHINE|FOLLOW_CURSOR);
   auto flower = entity_make(RENDER_COLLIDER|RENDER_SPRITE|FOLLOW);
   auto gun    = entity_make(NO_FLAGS);
   auto solid  = entity_make(RENDER_RECT|SOLID|DEPTH_BY_Y);
@@ -28,10 +27,6 @@ test_entities(void) {
     | COLLIDABLE
   );
 
-  cursor->state_animation[STM_IDLE]    = ANIM_AIM_IDLE;
-  cursor->state_animation[STM_PRESSED] = ANIM_AIM_PRESSED;
-  cursor->scale                        = V2S(1.0f);
-  cursor->depth                        = -INFINITY;
 
   player->position                  = V2S(0.0f);
   player->speed                     = 6.0f;
@@ -98,6 +93,11 @@ main(void) {
   }
   entity_manager_init();
   global_init();
+  auto cursor = entity_make(RENDER_ANIMATION|STATE_MACHINE|FOLLOW_CURSOR);
+  cursor->state_animation[STM_IDLE]    = ANIM_AIM_IDLE;
+  cursor->state_animation[STM_PRESSED] = ANIM_AIM_PRESSED;
+  cursor->scale                        = V2S(1.0f);
+  cursor->depth                        = -INFINITY;
   //test_entities();
   dungeon_gen_init(arena);
   window_run(arena);

@@ -28,6 +28,7 @@ struct entity {
   enum entity_flag next_flags;
   struct color color;
   struct v2 target_position;
+  struct v2 next_position;
   struct v2 position;
   struct v2 direction;
   struct v2 size;

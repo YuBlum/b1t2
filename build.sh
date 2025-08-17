@@ -38,7 +38,7 @@ vendor/miniaudio/win-miniaudio.o \
 elif [ "$1" = "lin" ]; then
   DEF+=" -DLINUX"
   SRCS+=" ./src/engine/x64lin.c"
-  FLAGS+=" -Wno-override-init-side-effects"
+  FLAGS+=" -Wno-override-init-side-effects -ggdb"
   LIBS+="\
 vendor/glad/lin-glad.o \
 vendor/miniaudio/lin-miniaudio.o \

@@ -3,6 +3,7 @@
 #include "engine/core.h"
 #include "engine/math.h"
 #include "engine/window.h"
+#include "engine/renderer.h"
 #if WASM
 #  include <emscripten.h>
 #endif
@@ -48,8 +49,9 @@ button_callback(GLFWwindow* _window, int button, int action, int _mods) {
 static void
 cursor_position_callback(GLFWwindow* _window, double xpos, double ypos) {
   (void)_window;
-  g_window.cursor.x = xpos/(GAME_S*UNIT_PER_PIXEL)-GAME_W*0.5f;
-  g_window.cursor.y = GAME_H*0.5f-ypos/(GAME_S*UNIT_PER_PIXEL);
+  auto offset = renderer_get_offset();
+  g_window.cursor.x = xpos/(GAME_S*UNIT_PER_PIXEL)-GAME_W*0.5f + offset.x;
+  g_window.cursor.y = GAME_H*0.5f-ypos/(GAME_S*UNIT_PER_PIXEL) + offset.y;
 }
 
 bool

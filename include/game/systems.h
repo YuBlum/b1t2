@@ -5,6 +5,7 @@
 
 void follow_cursor(struct entity *self, float dt);
 void keyboard_control(struct entity *self, float dt);
+void get_next_position(struct entity *self, float dt);
 void collide_with_solids(struct entity *self, float dt);
 void move(struct entity *self, float dt);
 void camera_follow(struct entity *self, float dt);
